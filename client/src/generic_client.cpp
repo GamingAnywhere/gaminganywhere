@@ -16,28 +16,26 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <sys/time.h>
-#include <unistd.h>
-#include <pthread.h>
+#include "ctrl_sdl.hpp"
+#include "generic_client.hpp"
+#include "rtsp_client.hpp"
+#include <ga/common.hpp>
+#include <ga/conf.hpp>
+#include <ga/controller.hpp>
+#include <ga/rtsp_conf.hpp>
+#include <ga/vconverter.hpp>
 
-#include "ga-common.h"
-#include "ga-conf.h"
-#include "vconverter.h"
-#include "rtspconf.h"
-#include "rtspclient.h"
-#include "controller.h"
-#include "ctrl-sdl.h"
-
-#include "generic-client.h"
+#include <thread>
+#include <mutex>
 
 // exported configurations
 static struct RTSPConf *g_conf = NULL;
 static struct RTSPThreadParam rtspThreadParam;
-static pthread_t ctrlthread;
-static pthread_t rtspthread;
+static std::thread ctrlthread;
+static std::thread rtspthread;
 
 // watchdog variables
-pthread_mutex_t watchdogMutex;
+std::mutex watchdogMutex;
 struct timeval watchdogTimer = {0LL, 0LL};
 
 static void

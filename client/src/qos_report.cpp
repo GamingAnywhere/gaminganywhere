@@ -16,13 +16,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdio.h>
-#include <string.h>
-
-#include "ga-common.h"
-#include "vsource.h"
-#include "rtspclient.h"
-#include "qosreport.h"
+#include <ga/vsource.hpp>
+#include "rtsp_client.hpp"
+#include "qos_report.hpp"
 
 #define	Q_MAX		(VIDEO_SOURCE_CHANNEL_MAX+1)
 

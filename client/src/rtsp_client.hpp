@@ -24,13 +24,13 @@
 #else
 #include <SDL2/SDL.h>
 #endif
-#include <pthread.h>
-
-#include "rtspconf.h"
+#include <ga/rtsp_conf.hpp>
 #ifndef ANDROID
-#include "vsource.h"
+#include <ga/vsource.hpp>
 #endif
-#include "dpipe.h"
+#include <ga/dpipe.hpp>
+
+#include <thread>
 
 #define	SDL_USEREVENT_CREATE_OVERLAY	0x0001
 #define	SDL_USEREVENT_OPEN_AUDIO	0x0002
@@ -56,7 +56,7 @@ struct RTSPThreadParam {
 	int width[VIDEO_SOURCE_CHANNEL_MAX];
 	int height[VIDEO_SOURCE_CHANNEL_MAX];
 	AVPixelFormat format[VIDEO_SOURCE_CHANNEL_MAX];
-	pthread_mutex_t surfaceMutex[VIDEO_SOURCE_CHANNEL_MAX];
+	std::thread surfaceMutex[VIDEO_SOURCE_CHANNEL_MAX];
 	struct SwsContext *swsctx[VIDEO_SOURCE_CHANNEL_MAX];
 	dpipe_t *pipe[VIDEO_SOURCE_CHANNEL_MAX];
 #ifdef ANDROID
@@ -69,7 +69,7 @@ struct RTSPThreadParam {
 	SDL_Texture *overlay[VIDEO_SOURCE_CHANNEL_MAX];
 #endif
 	// audio
-	pthread_mutex_t audioMutex;
+	std::mutex audioMutex;
 	bool audioOpened;
 #endif
 	int videostate;

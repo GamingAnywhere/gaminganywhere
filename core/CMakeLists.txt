@@ -39,7 +39,7 @@ add_library(${PROJECT_NAME}
 )
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 target_include_directories(${PROJECT_NAME} PUBLIC inc PRIVATE ${INCLUDE})
-target_compile_definitions(${PROJECT_NAME} PRIVATE GA_LIB USE_GA_WIN32_MACRO)
+target_compile_definitions(${PROJECT_NAME} PUBLIC GA_LIB USE_GA_WIN32_MACRO)
 set_target_properties(${PROJECT_NAME}
 	PROPERTIES
 		OUTPUT_NAME core
@@ -52,3 +52,4 @@ if(WIN32)
 	target_sources(${PROJECT_NAME} PRIVATE src/win32.cpp)
 endif()
 
+add_library(${CMAKE_PROJECT_NAME}::core ALIAS ${PROJECT_NAME})

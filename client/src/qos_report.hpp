@@ -19,9 +19,9 @@
 #ifndef __QOSREPORT_H__
 #define	__QOSREPORT_H__
 
-#include "ga-common.h"
-#include "liveMedia.hh"
-#include "BasicUsageEnvironment.hh"
+#include <ga/common.hpp>
+#include <liveMedia.hh>
+#include <BasicUsageEnvironment.hh>
 
 #define	QOS_INTERVAL_MS	(30 * 1000)	/* report every N seconds */
 #define QOS_PREFIX_LEN	64

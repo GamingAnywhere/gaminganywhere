@@ -24,5 +24,5 @@ find_package(Threads		REQUIRED)
 #find_package(spdlog		REQUIRED)
 
 add_subdirectory(core)
-#add_subdirectory(client)
+add_subdirectory(client)
 #add_subdirectory(server)

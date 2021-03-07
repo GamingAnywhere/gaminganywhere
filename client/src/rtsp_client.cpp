@@ -18,30 +18,23 @@
 
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
-#if 0
-/* XXX: not include GroupsockHelper.hh due to the conflict on gettimeofday() */
-#include "GroupsockHelper.hh"
-#else
 /* XXX: this one must be consistent to that defined in GroupsockHelper.hh" */
 unsigned increaseReceiveBufferTo(UsageEnvironment& env,
 		 int socket, unsigned requestedSize);
-#endif
 
-#ifndef ANDROID
-#include "vsource.h"
-#endif
-#include "rtspclient.h"
+#include "rtsp_client.hpp"
 
-#include "ga-common.h"
-#include "ga-conf.h"
-#include "ga-avcodec.h"
-#include "controller.h"
-#include "minih264.h"
-#include "qosreport.h"
+#include <ga/common.hpp>
+#include <ga/conf.hpp>
+#include <ga/avcodec.hpp>
+#include <ga/controller.hpp>
+#include "minih264.hpp"
+#include "qos_report.hpp"
+
 #ifdef ANDROID
 #include "android-decoders.h"
 #endif
-#include "vconverter.h"
+#include <ga/vconverter.hpp>
 
 #ifdef ANDROID
 #include "libgaclient.h"
@@ -119,8 +112,8 @@ static void shutdownStream(RTSPClient* rtspClient, int exitCode = 1);
 struct PacketQueue {
 	list<AVPacket> queue;
 	int size;
-	pthread_mutex_t mutex;
-	pthread_cond_t cond;
+	std::mutex mutex;
+	std::condition_variable cond;
 };
 
 static RTSPThreadParam *rtspParam = NULL;
@@ -135,14 +128,11 @@ static int packet_queue_limit = 5;	// limit the queue size
 static int packet_queue_dropfactor = 2;	// default drop half
 static PacketQueue audioq;
 
-void
-packet_queue_init(PacketQueue *q) {
+void packet_queue_init(PacketQueue *q) {
 	int val;
 	char buf[8];
 	packet_queue_initialized = 1;
 	q->queue.clear();
-	pthread_mutex_init(&q->mutex, NULL);
-	pthread_cond_init(&q->cond, NULL);
 	if(ga_conf_readv("audio-playback-queue-limit", buf, sizeof(buf)) != NULL) {
 		// must ensure that we have configured audio-playback-queue-limit
 		if((val = ga_conf_readint("audio-playback-queue-limit")) >= 0) {
@@ -160,17 +150,16 @@ packet_queue_init(PacketQueue *q) {
 	return;
 }
 
-int
-packet_queue_put(PacketQueue *q, AVPacket *pkt) {
+int packet_queue_put(PacketQueue *q, AVPacket *pkt) {
 	if(av_dup_packet(pkt) < 0) {
 		rtsperror("packet queue put failed\n");
 		return -1;
 	}
-	pthread_mutex_lock(&q->mutex);
+	std::unique_lock lk{ q->mutex };
 	q->queue.push_back(*pkt);
 	q->size += pkt->size;
-	pthread_mutex_unlock(&q->mutex);
-	pthread_cond_signal(&q->cond);
+	lk.unlock();
+	q->cond.notify_one();
 	return 0;
 }
 
