@@ -19,8 +19,7 @@
 #include "liveMedia.hh"
 #include "BasicUsageEnvironment.hh"
 /* XXX: this one must be consistent to that defined in GroupsockHelper.hh" */
-unsigned increaseReceiveBufferTo(UsageEnvironment& env,
-		 int socket, unsigned requestedSize);
+unsigned increaseReceiveBufferTo(UsageEnvironment&, int, unsigned);
 
 #include "rtsp_client.hpp"
 
@@ -170,7 +169,7 @@ packet_queue_get(PacketQueue *q, AVPacket *pkt, int block) {
 		rtsperror("packet queue not initialized\n");
 		return -1;
 	}
-	pthread_mutex_lock(&q->mutex);
+	std::lock_guard<std::mutex> lk{q->mutex};
 	for(;;) {
 		if(q->queue.size() > 0) {
 			*pkt = q->queue.front();

@@ -16,7 +16,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "ctrl_sdl.hpp"
 #include "generic_client.hpp"
 #include "rtsp_client.hpp"
 #include <ga/common.hpp>
@@ -24,6 +23,7 @@
 #include <ga/controller.hpp>
 #include <ga/rtsp_conf.hpp>
 #include <ga/vconverter.hpp>
+#include <ga/ctrl/ctrl.hpp>
 
 #include <thread>
 #include <mutex>

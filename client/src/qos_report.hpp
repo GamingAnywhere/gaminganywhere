@@ -17,26 +17,26 @@
  */
 
 #ifndef __QOSREPORT_H__
-#define	__QOSREPORT_H__
+#define __QOSREPORT_H__
 
+#include <BasicUsageEnvironment.hh>
 #include <ga/common.hpp>
 #include <liveMedia.hh>
-#include <BasicUsageEnvironment.hh>
 
-#define	QOS_INTERVAL_MS	(30 * 1000)	/* report every N seconds */
-#define QOS_PREFIX_LEN	64
+#define QOS_INTERVAL_MS (30 * 1000) /* report every N seconds */
+#define QOS_PREFIX_LEN 64
 
 typedef struct qos_record_s {
-	char prefix[QOS_PREFIX_LEN];
-	RTPSource *rtpsrc;
-	unsigned pkts_expected;
-	unsigned pkts_received;
-	double KB_received;
-}	qos_record_t;
+  char prefix[QOS_PREFIX_LEN];
+  RTPSource *rtpsrc;
+  unsigned pkts_expected;
+  unsigned pkts_received;
+  double KB_received;
+} qos_record_t;
 
 int qos_start();
 int qos_add_source(const char *prefix, RTPSource *rtpsrc);
 int qos_deinit();
 int qos_init(UsageEnvironment *ue);
 
-#endif	/* __QOSREPORT_H__ */
+#endif /* __QOSREPORT_H__ */

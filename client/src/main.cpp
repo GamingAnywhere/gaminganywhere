@@ -19,11 +19,9 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include <SDL.h>
-//#include <SDL2/SDL.h>
+#include <SDL2/SDL.h>
 #ifndef ANDROID
-//#include <SDL2/SDL_ttf.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL_ttf.h>
 #endif /* ! ANDROID */
 #if ! defined WIN32 && ! defined __APPLE__ && ! defined ANDROID
 #include <X11/Xlib.h>
@@ -33,7 +31,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 }
 
-#include "ctrl_sdl.hpp"
+#include <ga/ctrl/ctrl.hpp>
 #include "rtsp_client.hpp"
 #include <ga/avcodec.hpp>
 #include <ga/common.hpp>
@@ -237,7 +235,7 @@ create_overlay(struct RTSPThreadParam *rtspParam, int ch) {
 	//
 	rtsperror("ga-client: window created successfully (%dx%d).\n", w, h);
 	// initialize watchdog
-	std::lock_guard lk{ watchdogMutex };
+	std::lock_guard lkk{ watchdogMutex };
 	gettimeofday(&watchdogTimer, NULL);
 }
 
@@ -613,7 +611,6 @@ watchdog_thread(void *args) {
 		} else {
 			rtsperror("watchdog: initialized, but no frames received ...\n");
 		}
-		pthread_mutex_unlock(&watchdogMutex);
 	}
 	//
 	rtsperror("watchdog: terminated.\n");
@@ -622,15 +619,16 @@ watchdog_thread(void *args) {
 	return NULL;
 }
 
-int
-main(int argc, char *argv[]) {
+int main(int argc, char** argv)
+{
 	int i;
 	SDL_Event event;
-	pthread_t rtspthread;
-	pthread_t ctrlthread;
-	pthread_t watchdog;
+	std::thread rtspthread;
+	std::thread ctrlthread;
+	std::thread watchdog;
+
 	char savefile_keyts[128];
-	//
+
 #ifdef ANDROID
 	if(ga_init("/sdcard/ga/android.conf", NULL) < 0) {
 		rtsperror("cannot load configuration file '%s'\n", argv[1]);
@@ -705,43 +703,31 @@ main(int argc, char *argv[]) {
 	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 #endif
 	// launch controller?
-	do if(rtspconf->ctrlenable) {
+	do
+		if(rtspconf->ctrlenable)
+		{
 		if(ctrl_queue_init(32768, sizeof(sdlmsg_t)) < 0) {
 			rtsperror("Cannot initialize controller queue, controller disabled.\n");
 			rtspconf->ctrlenable = 0;
 			break;
 		}
-		if(pthread_create(&ctrlthread, NULL, ctrl_client_thread, rtspconf) != 0) {
-			rtsperror("Cannot create controller thread, controller disabled.\n");
-			rtspconf->ctrlenable = 0;
-			break;
-		}
-		pthread_detach(ctrlthread);
-	} while(0);
+		std::thread{ctrl_client_thread, rtspconf}.swap(ctrlthread);
+	}
+	while(0);
+
 	// launch watchdog
-	pthread_mutex_init(&watchdogMutex, NULL);
 	if(ga_conf_readbool("enable-watchdog", 1) == 1) {
-		if(pthread_create(&watchdog, NULL, watchdog_thread, NULL) != 0) {
-			rtsperror("Cannot create watchdog thread.\n");
-			return -1;
-		}
-		pthread_detach(watchdog);
+		std::thread{watchdog_thread}.swap(watchdog);
 	} else {
 		ga_error("watchdog disabled.\n");
 	}
 	//
 	bzero(&rtspThreadParam, sizeof(rtspThreadParam));
-	for(i = 0; i < VIDEO_SOURCE_CHANNEL_MAX; i++) {
-		pthread_mutex_init(&rtspThreadParam.surfaceMutex[i], NULL);
-	}
-	pthread_mutex_init(&rtspThreadParam.audioMutex, NULL);
 	rtspThreadParam.url = strdup(argv[2]);
 	rtspThreadParam.running = true;
-	if(pthread_create(&rtspthread, NULL, rtsp_thread, &rtspThreadParam) != 0) {
-		rtsperror("Cannot create rtsp client thread.\n");
-		return -1;
-	}
-	pthread_detach(rtspthread);
+
+	std::thread{rtsp_thread, &rtspThreadParam}.swap(rtspthread);
+
 	//
 	while(rtspThreadParam.running) {
 		if(SDL_WaitEvent(&event)) {
@@ -753,10 +739,14 @@ main(int argc, char *argv[]) {
 	rtsperror("terminating ...\n");
 	//
 #ifndef ANDROID
-	pthread_cancel(rtspthread);
-	if(rtspconf->ctrlenable)
-		pthread_cancel(ctrlthread);
-	pthread_cancel(watchdog);
+	if(rtspthread.joinable())
+		rtspthread.join();
+
+	if (ctrlthread.joinable())
+		ctrlthread.join();
+
+	if(watchdog.joinable())
+	watchdog.join();
 #endif
 	//SDL_WaitThread(thread, &status);
 	//
@@ -766,8 +756,5 @@ main(int argc, char *argv[]) {
 	}
 	SDL_Quit();
 	ga_deinit();
-	exit(0);
-	//
-	return 0;
 }
 
