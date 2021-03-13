@@ -20,6 +20,7 @@ add_library(${PROJECT_NAME}
 	${INCLUDE}/vconverter.hpp
 	${INCLUDE}/vsource.hpp
 	${INCLUDE}/win32.hpp
+	${INCLUDE}/ctrl/ctrl.hpp
 
 	src/asource.cpp
 	src/avcodec.cpp
@@ -36,10 +37,12 @@ add_library(${PROJECT_NAME}
 	src/rtsp_conf.cpp
 	src/vconverter.cpp
 	src/vsource.cpp
+	src/ctrl.cpp
 )
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
-target_include_directories(${PROJECT_NAME} PUBLIC inc PRIVATE ${INCLUDE})
+target_include_directories(${PROJECT_NAME} PUBLIC inc PRIVATE ${INCLUDE} ${FFMPEG_INCLUDE_DIRS})
 target_compile_definitions(${PROJECT_NAME} PUBLIC GA_LIB USE_GA_WIN32_MACRO)
+target_link_libraries(${PROJECT_NAME} PUBLIC ${FFMPEG_LIBRARIES})
 set_target_properties(${PROJECT_NAME}
 	PROPERTIES
 		OUTPUT_NAME core
