@@ -41,7 +41,8 @@ unsigned increaseReceiveBufferTo(UsageEnvironment&, int, unsigned);
 
 #include <list>
 #include <map>
-#include <string.h>
+#include <string>
+
 using namespace std;
 
 #ifndef AVCODEC_MAX_AUDIO_FRAME_SIZE
@@ -135,23 +136,18 @@ void packet_queue_init(PacketQueue* q)
 	packet_queue_initialized = 1;
 	q->queue.clear();
 	if(ga_conf_readv("audio-playback-queue-limit", buf, sizeof(buf)) != NULL)
-	{
 		// must ensure that we have configured audio-playback-queue-limit
 		if((val = ga_conf_readint("audio-playback-queue-limit")) >= 0)
-		{
 			packet_queue_limit = val;
-		}
-	}
+
 	if((val = ga_conf_readint("audio-playback-queue-dropfactor")) > 0)
-	{
 		packet_queue_dropfactor = val;
-	}
+
 	ga_error("packet queue: initialized - limit %d%s; dropfactor %d%s\n",
 				packet_queue_limit,
 				packet_queue_limit <= 0 ? " (unlimited)" : "",
 				packet_queue_dropfactor,
 				packet_queue_dropfactor <= 0 ? " (no drop)" : "");
-	return;
 }
 
 int packet_queue_put(PacketQueue* q, AVPacket* pkt)
@@ -177,7 +173,7 @@ int packet_queue_get(PacketQueue* q, AVPacket* pkt, int block)
 		rtsperror("packet queue not initialized\n");
 		return -1;
 	}
-	std::lock_guard<std::mutex> lk{q->mutex};
+	std::unique_lock<std::mutex> lk{q->mutex};
 	for(;;)
 	{
 		if(q->queue.size() > 0)
@@ -194,31 +190,12 @@ int packet_queue_get(PacketQueue* q, AVPacket* pkt, int block)
 			break;
 		}
 		else
-		{
-			struct timespec ts;
-#if defined(__APPLE__) || defined(WIN32)
-			struct timeval tv;
-			gettimeofday(&tv, NULL);
-			ts.tv_sec  = tv.tv_sec;
-			ts.tv_nsec = tv.tv_usec * 1000;
-#else
-			clock_gettime(CLOCK_REALTIME, &ts);
-#endif
-			ts.tv_nsec += 50000000LL /* 50ms */;
-			if(ts.tv_nsec >= 1000000000LL)
-			{
-				ts.tv_sec++;
-				ts.tv_nsec -= 1000000000LL;
-			}
-			if(pthread_cond_timedwait(&q->cond, &q->mutex, &ts) != 0)
+			if(q->cond.wait_for(lk, 50ms) == std::cv_status::timeout)
 			{
 				ret = -1;
 				break;
 			}
-			// pthread_cond_wait(&q->cond, &q->mutex);
-		}
 	}
-	pthread_mutex_unlock(&q->mutex);
 	return ret;
 }
 
@@ -229,13 +206,13 @@ int packet_queue_drop(PacketQueue* q)
 	// dropping enabled?
 	if(packet_queue_limit <= 0 || packet_queue_dropfactor <= 0)
 		return 0;
-	pthread_mutex_lock(&q->mutex);
+
+	std::lock_guard<std::mutex> lk{q->mutex};
+
 	// queue size exceeded?
 	if(q->queue.size() <= packet_queue_limit)
-	{
-		pthread_mutex_unlock(&q->mutex);
 		return 0;
-	}
+
 	// start dropping
 	dropped = q->queue.size() / packet_queue_dropfactor;
 	// keep at least one
@@ -250,7 +227,6 @@ int packet_queue_drop(PacketQueue* q)
 		q->size -= pkt.size;
 		count++;
 	}
-	pthread_mutex_unlock(&q->mutex);
 	return count;
 }
 
@@ -266,9 +242,9 @@ UsageEnvironment& operator<<(UsageEnvironment& env, const MediaSubsession& subse
 
 void rtsperror(const char* fmt, ...)
 {
-	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+	static std::mutex mtx;
 	va_list ap;
-	pthread_mutex_lock(&mutex);
+	std::lock_guard<std::mutex> lk{mtx};
 	va_start(ap, fmt);
 #ifdef ANDROID
 	__android_log_vprint(ANDROID_LOG_INFO, "ga_log", fmt, ap);
@@ -276,20 +252,18 @@ void rtsperror(const char* fmt, ...)
 	vfprintf(stderr, fmt, ap);
 #endif
 	va_end(ap);
-	pthread_mutex_unlock(&mutex);
-	return;
 }
 
 static unsigned char* decode_sprop(AVCodecContext* ctx, const char* sprop)
 {
 	unsigned char startcode[] = {0, 0, 0, 1};
-	int sizemax					  = ctx->extradata_size + strlen(sprop) * 3;
-	unsigned char* extra		  = (unsigned char*)malloc(sizemax);
-	unsigned char* dest		  = extra;
+	auto sizemax					  = ctx->extradata_size + strlen(sprop) * 3;
+	auto extra		  = (unsigned char*)malloc(sizemax);
+	auto dest		  = extra;
 	int extrasize				  = 0;
-	int spropsize				  = strlen(sprop);
-	char* mysprop				  = strdup(sprop);
-	unsigned char* tmpbuf	  = (unsigned char*)strdup(sprop);
+	auto spropsize				  = strlen(sprop);
+	auto mysprop				  = strdup(sprop);
+	auto tmpbuf	  = (unsigned char*)strdup(sprop);
 	char *s0						  = mysprop, *s1;
 	// already have extradata?
 	if(ctx->extradata)
@@ -303,10 +277,9 @@ static unsigned char* decode_sprop(AVCodecContext* ctx, const char* sprop)
 	{
 		int blen, more = 0;
 		for(s1 = s0; *s1; s1++)
-		{
 			if(*s1 == ',' || *s1 == '\0')
 				break;
-		}
+
 		if(*s1 == ',')
 			more = 1;
 		*s1 = '\0';
@@ -325,9 +298,7 @@ static unsigned char* decode_sprop(AVCodecContext* ctx, const char* sprop)
 		}
 		s0 = s1;
 		if(more)
-		{
 			s0++;
-		}
 	}
 	// release
 	free(mysprop);
@@ -499,7 +470,7 @@ int init_adecoder()
 
 //// packet loss monitor
 
-typedef struct pktloss_record_s
+struct pktloss_record_t
 {
 	/* XXX: ssrc is 32-bit, and seqnum is 16-bit */
 	int reset;					/* 1 - this record should be reset */
@@ -507,7 +478,7 @@ typedef struct pktloss_record_s
 	unsigned int ssrc;		/* SSRC */
 	unsigned short initseq; /* the 1st seqnum in the observation */
 	unsigned short lastseq; /* the last seqnum in the observation */
-} pktloss_record_t;
+};
 
 static map<unsigned int, pktloss_record_t> _pktmap;
 
@@ -519,8 +490,8 @@ int pktloss_monitor_init()
 
 void pktloss_monitor_update(unsigned int ssrc, unsigned short seqnum)
 {
-	map<unsigned int, pktloss_record_t>::iterator mi;
-	if((mi = _pktmap.find(ssrc)) == _pktmap.end())
+	auto mi =  _pktmap.find(ssrc);
+	if(mi == _pktmap.end())
 	{
 		pktloss_record_t r;
 		r.reset		  = 0;
@@ -531,6 +502,7 @@ void pktloss_monitor_update(unsigned int ssrc, unsigned short seqnum)
 		_pktmap[ssrc] = r;
 		return;
 	}
+
 	if(mi->second.reset != 0)
 	{
 		mi->second.reset	 = 0;
@@ -539,39 +511,37 @@ void pktloss_monitor_update(unsigned int ssrc, unsigned short seqnum)
 		mi->second.lastseq = seqnum;
 		return;
 	}
+
 	if((seqnum - 1) != mi->second.lastseq)
-	{
 		mi->second.lost += (seqnum - 1 - mi->second.lastseq);
-	}
 	mi->second.lastseq = seqnum;
-	return;
 }
 
 void pktloss_monitor_reset(unsigned int ssrc)
 {
-	map<unsigned int, pktloss_record_t>::iterator mi;
-	if((mi = _pktmap.find(ssrc)) != _pktmap.end())
-	{
+	auto mi = _pktmap.find(ssrc);
+	if(mi != _pktmap.end())
 		mi->second.reset = 1;
-	}
-	return;
 }
 
 int pktloss_monitor_get(unsigned int ssrc, int* count = NULL, int reset = 0)
 {
-	map<unsigned int, pktloss_record_t>::iterator mi;
-	if((mi = _pktmap.find(ssrc)) == _pktmap.end())
+	auto mi = _pktmap.find(ssrc);
+	if(mi == _pktmap.end())
 		return -1;
+
 	if(reset != 0)
 		mi->second.reset = 1;
+
 	if(count != NULL)
 		*count = (mi->second.lastseq - mi->second.initseq) + 1;
+
 	return mi->second.lost;
 }
 
 //// bandwidth estimator
 
-typedef struct bwe_record_s
+struct bwe_record_t
 {
 	struct timeval initTime;
 	unsigned int framecount;
@@ -586,7 +556,7 @@ typedef struct bwe_record_s
 	unsigned int samples;
 	unsigned int totalBytes;
 	unsigned int totalElapsed;
-} bwe_record_t;
+};
 
 static map<unsigned int, bwe_record_t> bwe_watchlist;
 
@@ -597,12 +567,12 @@ void bandwidth_estimator_update(unsigned int ssrc,
 										  unsigned int pktsize)
 {
 	bwe_record_t r;
-	map<unsigned int, bwe_record_t>::iterator mi;
 	bool sampleframe = true;
 	//
-	if((mi = bwe_watchlist.find(ssrc)) == bwe_watchlist.end())
+	auto mi = bwe_watchlist.find(ssrc);
+	if(mi == bwe_watchlist.end())
 	{
-		bzero(&r, sizeof(r));
+		memset(&r, 0, sizeof(r));
 		r.initTime				  = rcvtv;
 		r.framecount			  = 1;
 		r.pktcount				  = 1;
@@ -675,7 +645,6 @@ void bandwidth_estimator_update(unsigned int ssrc,
 	mi->second.lastPktRcvdTimestamp = rcvtv;
 	mi->second.lastPktSentTimestamp = timestamp;
 	mi->second.lastPktSize			  = pktsize;
-	return;
 }
 
 ////
@@ -683,7 +652,7 @@ void bandwidth_estimator_update(unsigned int ssrc,
 #if defined(WIN32) && !defined(MSYS)
 #pragma pack(push, 1)
 #endif
-struct rtp_pkt_minimum_s
+struct rtp_pkt_minimum_t
 {
 	unsigned short flags;
 	unsigned short seqnum;
@@ -697,18 +666,18 @@ __attribute__((__packed__))
 #endif
 ;
 
-typedef struct rtp_pkt_minimum_s rtp_pkt_minimum_t;
-
 void rtp_packet_handler(void* clientData, unsigned char* packet, unsigned& packetSize)
 {
-	rtp_pkt_minimum_t* rtp = (rtp_pkt_minimum_t*)packet;
+	auto rtp = (rtp_pkt_minimum_t*)packet;
 	unsigned int ssrc;
 	unsigned short seqnum;
 	unsigned short flags;
 	unsigned int timestamp;
 	struct timeval tv;
+
 	if(packet == NULL || packetSize < 12)
 		return;
+
 	gettimeofday(&tv, NULL);
 	ssrc		 = ntohl(rtp->ssrc);
 	seqnum	 = ntohs(rtp->seqnum);
@@ -733,35 +702,28 @@ void rtp_packet_handler(void* clientData, unsigned char* packet, unsigned& packe
 	//
 	bandwidth_estimator_update(ssrc, seqnum, tv, timestamp, packetSize);
 	pktloss_monitor_update(ssrc, seqnum);
-	//
-	return;
 }
 
 //// drop frame feature
 
-typedef struct drop_vframe_s
+struct drop_vframe_t
 {
 	struct timeval tv_real_start;	  // 1st wall-clock timestamp
 	struct timeval tv_stream_start; // 1st pkt timestamp
 	int no_drop;						  // keep N frames not dropped
-} drop_vframe_t;
+};
 
 static long long max_tolerable_video_delay_us = -1;
 static drop_vframe_t drop_vframe_ctx[VIDEO_SOURCE_CHANNEL_MAX];
 
 static void drop_video_frame_init(long long max_delay_us)
 {
-	bzero(&drop_vframe_ctx, sizeof(drop_vframe_ctx));
+	memset(&drop_vframe_ctx, 0, sizeof(drop_vframe_ctx));
 	max_tolerable_video_delay_us = max_delay_us;
 	if(max_tolerable_video_delay_us > 0)
-	{
 		ga_error("rtspclient: max tolerable video delay = %lldus\n", max_tolerable_video_delay_us);
-	}
 	else
-	{
 		ga_error("rtspclient: max tolerable video delay disabled.\n");
-	}
-	return;
 }
 
 static int drop_video_frame(int ch /*channel*/, unsigned char* buffer, int bufsize, struct timeval pts)
@@ -792,40 +754,34 @@ static int drop_video_frame(int ch /*channel*/, unsigned char* buffer, int bufsi
 			int offset, nalt;
 			// no frame start?
 			if(buffer[0] != 0 && buffer[1] != 0)
-			{
 				break;
-			}
+
 			// valid framing?
 			if(buffer[2] == 1)
-			{
 				offset = 3;
-			}
 			else if(buffer[2] == 0 && buffer[3] == 1)
-			{
 				offset = 4;
-			}
 			else
-			{
 				break;
-			}
+
 			nalt = buffer[offset] & 0x1f;
 			if(nalt == 0x1c)
-			{ /* first byte 0x7c is an I-frame? */
+			/* first byte 0x7c is an I-frame? */
 				drop_vframe_ctx[ch].no_drop = 2;
-			}
 			else if(nalt == 0x07)
-			{ /* sps */
+			/* sps */
 				drop_vframe_ctx[ch].no_drop = 4;
-			}
 			else if(nalt == 0x08)
-			{ /* pps */
+			/* pps */
 				drop_vframe_ctx[ch].no_drop = 3;
-			}
+
 			//
 			long long dstream = tvdiff_us(&pts, &drop_vframe_ctx[ch].tv_stream_start);
 			long long dreal	= tvdiff_us(&now, &drop_vframe_ctx[ch].tv_real_start);
+
 			if(drop_vframe_ctx[ch].no_drop > 0)
 				drop_vframe_ctx[ch].no_drop--;
+
 			if(dreal - dstream > max_tolerable_video_delay_us)
 			{
 				if(drop_vframe_ctx[ch].no_drop > 0)
@@ -874,39 +830,19 @@ static int play_video_priv(int ch /*channel*/, unsigned char* buffer, int bufsiz
 #endif
 	// drop the frame?
 	if(drop_video_frame(ch, buffer, bufsize, pts))
-	{
 		return bufsize;
-	}
-	//
+
 #ifdef SAVE_ENC
 	if(fout != NULL)
-	{
 		fwrite(buffer, sizeof(char), bufsize, fout);
-	}
 #endif
 	//
 	av_init_packet(&avpkt);
 	avpkt.size = bufsize;
 	avpkt.data = buffer;
-#if 0 // XXX: dump nal units
-	do {
-		int codelen = 0;
-		unsigned char *ptr = NULL;
-		//
-		fprintf(stderr, "[XXX-nalcode]");
-		for(	ptr = ga_find_startcode(avpkt.data, avpkt.data+avpkt.size, &codelen);
-			ptr != NULL;
-			ptr = ga_find_startcode(ptr+codelen, avpkt.data+avpkt.size, &codelen)) {
-			//
-			fprintf(stderr, " (+%d|%d)-%02x", ptr-avpkt.data, codelen, ptr[codelen] & 0x1f);
-		}
-		fprintf(stderr, "\n");
-	} while(0);
-#endif
-	//
+
 	while(avpkt.size > 0)
 	{
-		//
 #ifdef PRINT_LATENCY
 		gettimeofday(&ptv0, NULL);
 #endif
@@ -920,9 +856,8 @@ static int play_video_priv(int ch /*channel*/, unsigned char* buffer, int bufsiz
 #ifdef COUNT_FRAME_RATE
 			cf_frame[ch]++;
 			if(cf_tv0[ch].tv_sec == 0)
-			{
 				gettimeofday(&cf_tv0[ch], NULL);
-			}
+
 			if(cf_frame[ch] == COUNT_FRAME_RATE)
 			{
 				gettimeofday(&cf_tv1[ch], NULL);
@@ -937,7 +872,7 @@ static int play_video_priv(int ch /*channel*/, unsigned char* buffer, int bufsiz
 			}
 #endif
 			// create surface & bitmap for the first time
-			pthread_mutex_lock(&rtspParam->surfaceMutex[ch]);
+			std::lock_guard<std::mutex> lk{rtspParam->surfaceMutex[ch]};
 			if(rtspParam->swsctx[ch] == NULL)
 			{
 				rtspParam->width[ch]	 = vframe[ch]->width;
@@ -1062,8 +997,7 @@ static struct decoder_buffer db[VIDEO_SOURCE_CHANNEL_MAX];
 
 static void deinit_decoder_buffer()
 {
-	int i;
-	for(i = 0; i < VIDEO_SOURCE_CHANNEL_MAX; i++)
+	for(int i = 0; i < VIDEO_SOURCE_CHANNEL_MAX; i++)
 	{
 		if(db[i].privbuf_unaligned != NULL)
 		{
@@ -1071,16 +1005,13 @@ static void deinit_decoder_buffer()
 		}
 	}
 	bzero(db, sizeof(db));
-	return;
 }
 
 static int init_decoder_buffer()
 {
-	int i;
-	//
 	deinit_decoder_buffer();
 	//
-	for(i = 0; i < VIDEO_SOURCE_CHANNEL_MAX; i++)
+	for(int i = 0; i < VIDEO_SOURCE_CHANNEL_MAX; i++)
 	{
 		db[i].privbuf_unaligned = (unsigned char*)malloc(PRIVATE_BUFFER_SIZE + 16);
 		if(db[i].privbuf_unaligned == NULL)
@@ -1088,15 +1019,7 @@ static int init_decoder_buffer()
 			rtsperror("FATAL: cannot allocate private buffer (%d:%d bytes): %s\n", i, PRIVATE_BUFFER_SIZE, strerror(errno));
 			goto adb_failed;
 		}
-#if 0
-#if defined(__LP64__) || defined(_LP64) || defined(WIN64) /* 64-bit */
-		db[i].offset = 16 - (((unsigned long long) db[i].privbuf_unaligned) & 0x0f);
-#else
-		db[i].offset = 16 - (((unsigned) db[i].privbuf_unaligned) & 0x0f);
-#endif
-#else
 		db[i].offset = 16 - (((size_t)db[i].privbuf_unaligned) & 0x0f);
-#endif
 		db[i].privbuf = db[i].privbuf_unaligned + db[i].offset;
 	}
 	return 0;
@@ -1149,9 +1072,7 @@ static void play_video(int channel, unsigned char* buffer, int bufsize, struct t
 					rtsperror("decoder: %d bytes left, preserved for next round\n", left);
 				}
 				else
-				{
 					pdb->privbuflen = 0;
-				}
 			}
 			pdb->lastpts = pts;
 		}
@@ -1169,9 +1090,7 @@ static void play_video(int channel, unsigned char* buffer, int bufsize, struct t
 					rtsperror("decoder: %d bytes left, leave for next round\n", left);
 				}
 				else
-				{
 					pdb->privbuflen = 0;
-				}
 			}
 		}
 		else
@@ -1185,14 +1104,11 @@ static void play_video(int channel, unsigned char* buffer, int bufsize, struct t
 				rtsperror("decoder: %d bytes left, leave for next round\n", left);
 			}
 			else
-			{
 				pdb->privbuflen = 0;
-			}
 		}
 #ifdef ANDROID
 	}
 #endif
-	return;
 }
 
 static const int abmaxsize		 = AVCODEC_MAX_AUDIO_FRAME_SIZE * 4;
@@ -1211,9 +1127,7 @@ unsigned char* audio_buffer_init()
 	{
 		audiobuf = (unsigned char*)malloc(abmaxsize);
 		if(audiobuf == NULL)
-		{
 			return NULL;
-		}
 	}
 	return audiobuf;
 }
@@ -1224,7 +1138,7 @@ int audio_buffer_decode(AVPacket* pkt, unsigned char* dstbuf, int dstlen)
 	unsigned char* dstplanes[SWR_CH_MAX];
 	unsigned char* saveptr;
 	int filled = 0;
-	//
+
 	saveptr = pkt->data;
 	while(pkt->size > 0)
 	{
@@ -1238,13 +1152,14 @@ int audio_buffer_decode(AVPacket* pkt, unsigned char* dstbuf, int dstlen)
 			rtsperror("decode audio failed.\n");
 			return -1;
 		}
+
 		if(got_frame == 0)
 		{
 			pkt->size -= len;
 			pkt->data += len;
 			continue;
 		}
-		//
+
 		if(aframe->format == rtspconf->audio_device_format)
 		{
 			datalen = av_samples_get_buffer_size(NULL,
@@ -1312,25 +1227,14 @@ int audio_buffer_decode(AVPacket* pkt, unsigned char* dstbuf, int dstlen)
 			{
 				// planar
 				int i;
-#if 0
-				// obtain source line size - for calaulating buffer pointers
-				av_samples_get_buffer_size(srclines,
-						aframe->channels,
-						aframe->nb_samples,
-						(AVSampleFormat) aframe->format, 1/*no-alignment*/);
-				//
-#endif
 				for(i = 1; i < aframe->channels; i++)
-				{
 					// srcplanes[i] = srcplanes[i-1] + srclines[i-1];
 					srcplanes[i] = aframe->data[i];
-				}
 				srcplanes[i] = NULL;
 			}
 			else
-			{
 				srcplanes[1] = NULL;
-			}
+
 			// dstplanes: assume always in packed (interleaved) format
 			dstplanes[0] = convbuf;
 			dstplanes[1] = NULL;
@@ -1343,12 +1247,12 @@ int audio_buffer_decode(AVPacket* pkt, unsigned char* dstbuf, int dstlen)
 			rtsperror("decoded audio truncated.\n");
 			datalen = dstlen;
 		}
-		//
+
 		bcopy(srcbuf, dstbuf, datalen);
 		dstbuf += datalen;
 		dstlen -= datalen;
 		filled += datalen;
-		//
+
 		pkt->size -= len;
 		pkt->data += len;
 	}
@@ -1381,7 +1285,6 @@ int audio_buffer_fill(void* userdata, unsigned char* stream, int ssize)
 	while(filled < ssize)
 	{
 		int dsize = 0, delta = 0;
-		;
 		// buffer has enough data
 		if(absize - abpos >= ssize - filled)
 		{
@@ -1431,7 +1334,6 @@ void audio_buffer_fill_sdl(void* userdata, unsigned char* stream, int ssize)
 		return;
 	}
 	bzero(stream + filled, ssize - filled);
-	return;
 }
 
 static void play_audio(unsigned char* buffer, int bufsize, struct timeval pts)
@@ -1452,11 +1354,6 @@ static void play_audio(unsigned char* buffer, int bufsize, struct timeval pts)
 		avpkt.size = bufsize;
 		if(avpkt.size > 0)
 		{
-#if 0
-		fprintf(stderr, "DEBUG: audio pts=%08ld.%06ld queue-count=%u queue-size=%u\n",
-			pts.tv_sec, pts.tv_usec,
-			audioq.queue.size(), audioq.size);
-#endif
 			packet_queue_put(&audioq, &avpkt);
 			packet_queue_drop(&audioq);
 		}
@@ -1478,7 +1375,6 @@ static void play_audio(unsigned char* buffer, int bufsize, struct timeval pts)
 		////////////////////////////////////////
 	}
 #endif
-	return;
 }
 
 void* rtsp_thread(void* param)
