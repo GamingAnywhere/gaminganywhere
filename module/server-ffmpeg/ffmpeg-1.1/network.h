@@ -21,13 +21,13 @@
 #ifndef AVFORMAT_NETWORK_H
 #define AVFORMAT_NETWORK_H
 
-#include <errno.h>
-#include <stdint.h>
-
+#include "avio.h"
 #include "config.h"
 #include "libavutil/error.h"
 #include "os_support.h"
-#include "avio.h"
+
+#include <errno.h>
+#include <stdint.h>
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -41,24 +41,24 @@
 #define EPROTONOSUPPORT WSAEPROTONOSUPPORT
 #endif
 #ifndef ETIMEDOUT
-#define ETIMEDOUT       WSAETIMEDOUT
+#define ETIMEDOUT WSAETIMEDOUT
 #endif
 #ifndef ECONNREFUSED
-#define ECONNREFUSED    WSAECONNREFUSED
+#define ECONNREFUSED WSAECONNREFUSED
 #endif
 #ifndef EINPROGRESS
-#define EINPROGRESS     WSAEINPROGRESS
+#define EINPROGRESS WSAEINPROGRESS
 #endif
 
-#define getsockopt(a, b, c, d, e) getsockopt(a, b, c, (char*) d, e)
-#define setsockopt(a, b, c, d, e) setsockopt(a, b, c, (const char*) d, e)
+#define getsockopt(a, b, c, d, e) getsockopt(a, b, c, (char*)d, e)
+#define setsockopt(a, b, c, d, e) setsockopt(a, b, c, (const char*)d, e)
 
 int ff_neterrno(void);
 #else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 #define ff_neterrno() AVERROR(errno)
 #endif
@@ -92,34 +92,36 @@ int ff_network_wait_fd(int fd, int write);
  * @param int_cb Interrupt callback, is checked after each ff_network_wait_fd call
  * @return 0 if data can be read/written, AVERROR(ETIMEDOUT) if timeout expired, or negative error code
  */
-int ff_network_wait_fd_timeout(int fd, int write, int64_t timeout, AVIOInterruptCB *int_cb);
+int ff_network_wait_fd_timeout(int fd, int write, int64_t timeout, AVIOInterruptCB* int_cb);
 
-int ff_inet_aton (const char * str, struct in_addr * add);
+int ff_inet_aton(const char* str, struct in_addr* add);
 
 #if !HAVE_STRUCT_SOCKADDR_STORAGE
-struct sockaddr_storage {
+struct sockaddr_storage
+{
 #if HAVE_STRUCT_SOCKADDR_SA_LEN
-    uint8_t ss_len;
-    uint8_t ss_family;
+	uint8_t ss_len;
+	uint8_t ss_family;
 #else
-    uint16_t ss_family;
+	uint16_t ss_family;
 #endif
-    char ss_pad1[6];
-    int64_t ss_align;
-    char ss_pad2[112];
+	char ss_pad1[6];
+	int64_t ss_align;
+	char ss_pad2[112];
 };
 #endif
 
 #if !HAVE_STRUCT_ADDRINFO
-struct addrinfo {
-    int ai_flags;
-    int ai_family;
-    int ai_socktype;
-    int ai_protocol;
-    int ai_addrlen;
-    struct sockaddr *ai_addr;
-    char *ai_canonname;
-    struct addrinfo *ai_next;
+struct addrinfo
+{
+	int ai_flags;
+	int ai_family;
+	int ai_socktype;
+	int ai_protocol;
+	int ai_addrlen;
+	struct sockaddr* ai_addr;
+	char* ai_canonname;
+	struct addrinfo* ai_next;
 };
 #endif
 
@@ -185,18 +187,15 @@ struct addrinfo {
 #endif
 
 #if !HAVE_GETADDRINFO
-int ff_getaddrinfo(const char *node, const char *service,
-                   const struct addrinfo *hints, struct addrinfo **res);
-void ff_freeaddrinfo(struct addrinfo *res);
-int ff_getnameinfo(const struct sockaddr *sa, int salen,
-                   char *host, int hostlen,
-                   char *serv, int servlen, int flags);
-#define getaddrinfo ff_getaddrinfo
+int ff_getaddrinfo(const char* node, const char* service, const struct addrinfo* hints, struct addrinfo** res);
+void ff_freeaddrinfo(struct addrinfo* res);
+int ff_getnameinfo(const struct sockaddr* sa, int salen, char* host, int hostlen, char* serv, int servlen, int flags);
+#define getaddrinfo	ff_getaddrinfo
 #define freeaddrinfo ff_freeaddrinfo
-#define getnameinfo ff_getnameinfo
+#define getnameinfo	ff_getnameinfo
 #endif
 #if !HAVE_GETADDRINFO || HAVE_WINSOCK2_H
-const char *ff_gai_strerror(int ecode);
+const char* ff_gai_strerror(int ecode);
 #undef gai_strerror
 #define gai_strerror ff_gai_strerror
 #endif
@@ -217,9 +216,9 @@ const char *ff_gai_strerror(int ecode);
 #define IN_MULTICAST(a) ((((uint32_t)(a)) & 0xf0000000) == 0xe0000000)
 #endif
 #ifndef IN6_IS_ADDR_MULTICAST
-#define IN6_IS_ADDR_MULTICAST(a) (((uint8_t *) (a))[0] == 0xff)
+#define IN6_IS_ADDR_MULTICAST(a) (((uint8_t*)(a))[0] == 0xff)
 #endif
 
-int ff_is_multicast_address(struct sockaddr *addr);
+int ff_is_multicast_address(struct sockaddr* addr);
 
 #endif /* AVFORMAT_NETWORK_H */

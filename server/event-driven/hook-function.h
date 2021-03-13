@@ -21,8 +21,8 @@
 
 #include "hook-common.h"
 
-#define	SOURCES		1
-#define BITSPERPIXEL	32
+#define SOURCES		1
+#define BITSPERPIXEL 32
 
 extern TGetRawInputData pGetRawInputData;
 //
@@ -40,108 +40,81 @@ extern TCreateDXGIFactory pCreateDXGIFactory;
 extern void release_hook_resources();
 
 //
-DllExport HRESULT __stdcall hook_GetRawInputData (
-	HRAWINPUT hRawInput,
-	UINT uiCommand,
-	LPVOID pData,
-	PUINT pcbSize,
-	UINT cbSizeHeader
-);
+DllExport HRESULT __stdcall hook_GetRawInputData(HRAWINPUT hRawInput,
+																 UINT uiCommand,
+																 LPVOID pData,
+																 PUINT pcbSize,
+																 UINT cbSizeHeader);
 
 // --- DirectX 9 ---
 DllExport IDirect3D9* WINAPI hook_d3d(UINT SDKVersion);
 
-DllExport HRESULT __stdcall hook_D3D9CreateDevice(
-	IDirect3DDevice9 * This,
-	UINT Adapter,
-	D3DDEVTYPE DeviceType,
-	HWND hFocusWindow,
-	DWORD BehaviorFlags,
-	D3DPRESENT_PARAMETERS *pPresentationParameters,
-	IDirect3DDevice9 **ppReturnedDeviceInterface
-);
+DllExport HRESULT __stdcall hook_D3D9CreateDevice(IDirect3DDevice9* This,
+																  UINT Adapter,
+																  D3DDEVTYPE DeviceType,
+																  HWND hFocusWindow,
+																  DWORD BehaviorFlags,
+																  D3DPRESENT_PARAMETERS* pPresentationParameters,
+																  IDirect3DDevice9** ppReturnedDeviceInterface);
 
-DllExport HRESULT __stdcall hook_D3D9GetSwapChain(
-	IDirect3DDevice9 *This,
-	UINT iSwapChain,
-	IDirect3DSwapChain9 **ppSwapChain
-);
+DllExport HRESULT __stdcall hook_D3D9GetSwapChain(IDirect3DDevice9* This, UINT iSwapChain, IDirect3DSwapChain9** ppSwapChain);
 
-DllExport HRESULT __stdcall hook_D3D9SwapChainPresent(
-	IDirect3DSwapChain9 * This,
-	CONST RECT* pSourceRect,
-	CONST RECT* pDestRect,
-	HWND hDestWindowOverride,
-	CONST RGNDATA* pDirtyRegion,
-	DWORD dwFlags
-);
+DllExport HRESULT __stdcall hook_D3D9SwapChainPresent(IDirect3DSwapChain9* This,
+																		CONST RECT* pSourceRect,
+																		CONST RECT* pDestRect,
+																		HWND hDestWindowOverride,
+																		CONST RGNDATA* pDirtyRegion,
+																		DWORD dwFlags);
 
-DllExport HRESULT __stdcall hook_D3D9DevicePresent(
-	IDirect3DDevice9 * This,
-	CONST RECT* pSourceRect,
-	CONST RECT* pDestRect,
-	HWND hDestWindowOverride,
-	CONST RGNDATA* pDirtyRegion
-);
+DllExport HRESULT __stdcall hook_D3D9DevicePresent(IDirect3DDevice9* This,
+																	CONST RECT* pSourceRect,
+																	CONST RECT* pDestRect,
+																	HWND hDestWindowOverride,
+																	CONST RGNDATA* pDirtyRegion);
 
 // --- DXGI ---
-DllExport HRESULT __stdcall hook_CreateDXGIFactory(
-	REFIID riid,
-	void **ppFactory
-);
+DllExport HRESULT __stdcall hook_CreateDXGIFactory(REFIID riid, void** ppFactory);
 
-DllExport HRESULT __stdcall hook_DXGICreateSwapChain(
-	IDXGIFactory *This,
-	IUnknown *pDevice,
-	DXGI_SWAP_CHAIN_DESC *pDesc,
-	IDXGISwapChain **ppSwapChain
-);
+DllExport HRESULT __stdcall hook_DXGICreateSwapChain(IDXGIFactory* This,
+																	  IUnknown* pDevice,
+																	  DXGI_SWAP_CHAIN_DESC* pDesc,
+																	  IDXGISwapChain** ppSwapChain);
 
 // --- DirectX 10 / 10.1 / 11 ---
-DllExport HRESULT __stdcall hook_D3D10CreateDeviceAndSwapChain(
-	IDXGIAdapter *pAdapter,
-	D3D10_DRIVER_TYPE DriverType,
-	HMODULE Software,
-	UINT Flags,
-	UINT SDKVersion,
-	DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
-	IDXGISwapChain **ppSwapChain,
-	ID3D10Device **ppDevice
-);
+DllExport HRESULT __stdcall hook_D3D10CreateDeviceAndSwapChain(IDXGIAdapter* pAdapter,
+																					D3D10_DRIVER_TYPE DriverType,
+																					HMODULE Software,
+																					UINT Flags,
+																					UINT SDKVersion,
+																					DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
+																					IDXGISwapChain** ppSwapChain,
+																					ID3D10Device** ppDevice);
 
-DllExport HRESULT __stdcall hook_D3D10CreateDeviceAndSwapChain1(
-	IDXGIAdapter *pAdapter,
-	D3D10_DRIVER_TYPE DriverType,
-	HMODULE Software,
-	UINT Flags,
-	D3D10_FEATURE_LEVEL1 HardwareLevel,
-	UINT SDKVersion,
-	DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
-	IDXGISwapChain **ppSwapChain,
-	ID3D10Device1 **ppDevice
-);
+DllExport HRESULT __stdcall hook_D3D10CreateDeviceAndSwapChain1(IDXGIAdapter* pAdapter,
+																					 D3D10_DRIVER_TYPE DriverType,
+																					 HMODULE Software,
+																					 UINT Flags,
+																					 D3D10_FEATURE_LEVEL1 HardwareLevel,
+																					 UINT SDKVersion,
+																					 DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
+																					 IDXGISwapChain** ppSwapChain,
+																					 ID3D10Device1** ppDevice);
 
-DllExport HRESULT __stdcall hook_D3D11CreateDeviceAndSwapChain(
-	IDXGIAdapter *pAdapter,
-	D3D_DRIVER_TYPE DriverType,
-	HMODULE Software,
-	UINT Flags,
-	const D3D_FEATURE_LEVEL *pFeatureLevels,
-	UINT FeatureLevels,
-	UINT SDKVersion,
-	const DXGI_SWAP_CHAIN_DESC *pSwapChainDesc,
-	IDXGISwapChain **ppSwapChain,
-	ID3D11Device **ppDevice,
-	D3D_FEATURE_LEVEL *pFeatureLevel,
-	ID3D11DeviceContext **ppImmediateContext
-);
+DllExport HRESULT __stdcall hook_D3D11CreateDeviceAndSwapChain(IDXGIAdapter* pAdapter,
+																					D3D_DRIVER_TYPE DriverType,
+																					HMODULE Software,
+																					UINT Flags,
+																					const D3D_FEATURE_LEVEL* pFeatureLevels,
+																					UINT FeatureLevels,
+																					UINT SDKVersion,
+																					const DXGI_SWAP_CHAIN_DESC* pSwapChainDesc,
+																					IDXGISwapChain** ppSwapChain,
+																					ID3D11Device** ppDevice,
+																					D3D_FEATURE_LEVEL* pFeatureLevel,
+																					ID3D11DeviceContext** ppImmediateContext);
 // ------
 
-DllExport HRESULT __stdcall hook_DXGISwapChainPresent(
-	IDXGISwapChain * This,
-	UINT SyncInterval,
-	UINT Flags
-);
+DllExport HRESULT __stdcall hook_DXGISwapChainPresent(IDXGISwapChain* This, UINT SyncInterval, UINT Flags);
 
 void GetRawInputDevice(bool is_mame_game);
 

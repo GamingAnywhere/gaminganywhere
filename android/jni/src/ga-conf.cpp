@@ -1,1 +1,1 @@
-../../../core/ga-conf.cpp
+../../../ core / ga - conf.cpp

@@ -1,1 +1,1 @@
-../../../client/minih264.h
+../../../ client / minih264.h

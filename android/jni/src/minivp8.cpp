@@ -1,1 +1,1 @@
-../../../client/minivp8.cpp
+../../../ client / minivp8.cpp

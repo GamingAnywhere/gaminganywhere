@@ -21,9 +21,8 @@
 
 int vpu_encoder_init(int width, int height, int fps_n, int fps_d, int bitrate, int gopsize);
 int vpu_encoder_deinit();
-const unsigned char * vpu_encoder_get_h264_sps(int *size);
-const unsigned char * vpu_encoder_get_h264_pps(int *size);
-unsigned char * vpu_encoder_encode(unsigned char *frame, int framesize, int *encsize);
+const unsigned char* vpu_encoder_get_h264_sps(int* size);
+const unsigned char* vpu_encoder_get_h264_pps(int* size);
+unsigned char* vpu_encoder_encode(unsigned char* frame, int framesize, int* encsize);
 
 #endif /* __VPU_COMMON_H__ */
-

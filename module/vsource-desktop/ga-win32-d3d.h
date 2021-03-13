@@ -19,12 +19,12 @@
 #ifndef __XCAP_WIN32_D3D_H__
 #define __XCAP_WIN32_D3D_H__
 
-#include "ga-common.h"
 #include "ga-avcodec.h"
+#include "ga-common.h"
 
-int ga_win32_D3D_init(struct gaImage *image);
+int ga_win32_D3D_init(struct gaImage* image);
 void ga_win32_D3D_deinit();
-int ga_win32_D3D_capture(char *buf, int buflen, struct gaRect *grect);
-//int ga_win32_D3D_capture_YUV(struct SwsContext *swsctx, char *buf, int buflen, int *linesize);
+int ga_win32_D3D_capture(char* buf, int buflen, struct gaRect* grect);
+// int ga_win32_D3D_capture_YUV(struct SwsContext *swsctx, char *buf, int buflen, int *linesize);
 
 #endif

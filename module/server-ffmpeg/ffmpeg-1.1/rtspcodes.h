@@ -24,31 +24,31 @@
 
 /** RTSP handling */
 enum RTSPStatusCode {
-RTSP_STATUS_OK              =200, /**< OK */
-RTSP_STATUS_METHOD          =405, /**< Method Not Allowed */
-RTSP_STATUS_BANDWIDTH       =453, /**< Not Enough Bandwidth */
-RTSP_STATUS_SESSION         =454, /**< Session Not Found */
-RTSP_STATUS_STATE           =455, /**< Method Not Valid in This State */
-RTSP_STATUS_AGGREGATE       =459, /**< Aggregate operation not allowed */
-RTSP_STATUS_ONLY_AGGREGATE  =460, /**< Only aggregate operation allowed */
-RTSP_STATUS_TRANSPORT       =461, /**< Unsupported transport */
-RTSP_STATUS_INTERNAL        =500, /**< Internal Server Error */
-RTSP_STATUS_SERVICE         =503, /**< Service Unavailable */
-RTSP_STATUS_VERSION         =505, /**< RTSP Version not supported */
+	RTSP_STATUS_OK					= 200, /**< OK */
+	RTSP_STATUS_METHOD			= 405, /**< Method Not Allowed */
+	RTSP_STATUS_BANDWIDTH		= 453, /**< Not Enough Bandwidth */
+	RTSP_STATUS_SESSION			= 454, /**< Session Not Found */
+	RTSP_STATUS_STATE				= 455, /**< Method Not Valid in This State */
+	RTSP_STATUS_AGGREGATE		= 459, /**< Aggregate operation not allowed */
+	RTSP_STATUS_ONLY_AGGREGATE = 460, /**< Only aggregate operation allowed */
+	RTSP_STATUS_TRANSPORT		= 461, /**< Unsupported transport */
+	RTSP_STATUS_INTERNAL			= 500, /**< Internal Server Error */
+	RTSP_STATUS_SERVICE			= 503, /**< Service Unavailable */
+	RTSP_STATUS_VERSION			= 505, /**< RTSP Version not supported */
 };
 
 enum RTSPMethod {
-    DESCRIBE,
-    ANNOUNCE,
-    OPTIONS,
-    SETUP,
-    PLAY,
-    PAUSE,
-    TEARDOWN,
-    GET_PARAMETER,
-    SET_PARAMETER,
-    REDIRECT,
-    RECORD,
-    UNKNOWN = -1,
+	DESCRIBE,
+	ANNOUNCE,
+	OPTIONS,
+	SETUP,
+	PLAY,
+	PAUSE,
+	TEARDOWN,
+	GET_PARAMETER,
+	SET_PARAMETER,
+	REDIRECT,
+	RECORD,
+	UNKNOWN = -1,
 };
 #endif /* AVFORMAT_RTSPCODES_H */

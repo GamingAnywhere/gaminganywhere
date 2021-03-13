@@ -19,8 +19,8 @@
 #ifndef __GA_HOOK_LIB_H__
 #define __GA_HOOK_LIB_H__
 
-void register_dlsym_hooks(const char *symbol, void *callback);
-int hook_libdl(const char *libpath);
-int hook_lib_generic(const char *libpath, void *handle, const char *name, void *func);
+void register_dlsym_hooks(const char* symbol, void* callback);
+int hook_libdl(const char* libpath);
+int hook_lib_generic(const char* libpath, void* handle, const char* name, void* func);
 
 #endif /* __GA_HOOK_LIB_H__ */

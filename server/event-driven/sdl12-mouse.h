@@ -1,1 +1,1 @@
-../event-posix/sdl12-mouse.h
+../ event - posix / sdl12 - mouse.h

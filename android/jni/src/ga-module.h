@@ -1,1 +1,1 @@
-../../../core/ga-module.h
+../../../ core / ga - module.h

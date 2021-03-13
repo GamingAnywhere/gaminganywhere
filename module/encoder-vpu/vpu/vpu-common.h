@@ -20,71 +20,73 @@
 #define __VPU_COMMON_H__
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-#include <vpu_lib.h>
 #include <vpu_io.h>
+#include <vpu_lib.h>
 #ifdef __cplusplus
 }
 #endif
 
-#define	VPU_MEM_ALIGN			(8)
-#define	VPU_ENC_MAX_NUM_MEM_REQS	(40)
-#define	VPU_ENC_MAX_FRAME		(10)
-#define	VPU_ENC_BITSTREAM_SIZE		(3072 * 1024)	// 3MB
-#define VPU_ENC_MPEG4_SCRATCH_SIZE	0x080000
+#define VPU_MEM_ALIGN				  (8)
+#define VPU_ENC_MAX_NUM_MEM_REQS	  (40)
+#define VPU_ENC_MAX_FRAME			  (10)
+#define VPU_ENC_BITSTREAM_SIZE	  (3072 * 1024) // 3MB
+#define VPU_ENC_MPEG4_SCRATCH_SIZE 0x080000
 
-#define	vpu_align(ptr, align)		(((unsigned long) ptr+(align)-1)/(align)*(align))
+#define vpu_align(ptr, align) (((unsigned long)ptr + (align)-1) / (align) * (align))
 
-typedef struct PhyMemInfo {
+typedef struct PhyMemInfo
+{
 	// phy mem info
 	int nPhyNum;
 	unsigned long phyMem_virtAddr[VPU_ENC_MAX_NUM_MEM_REQS];
 	unsigned long phyMem_phyAddr[VPU_ENC_MAX_NUM_MEM_REQS];
 	unsigned long phyMem_cpuAddr[VPU_ENC_MAX_NUM_MEM_REQS];
-	unsigned long phyMem_size[VPU_ENC_MAX_NUM_MEM_REQS];	
-}	PhyMemInfo;
+	unsigned long phyMem_size[VPU_ENC_MAX_NUM_MEM_REQS];
+} PhyMemInfo;
 
-typedef struct vpu_context_s {
-	int		vpu_initialized;
-	int		vpu_width;		// real pic dimension
-	int		vpu_height;
-	int		vpu_framesize;
-	int		vpu_phy_width;		// phymem alloc dimension
-	int		vpu_phy_height;
-	int		vpu_phy_framesize;
+typedef struct vpu_context_s
+{
+	int vpu_initialized;
+	int vpu_width; // real pic dimension
+	int vpu_height;
+	int vpu_framesize;
+	int vpu_phy_width; // phymem alloc dimension
+	int vpu_phy_height;
+	int vpu_phy_framesize;
 	//
-	EncHandle	vpu_handle;
-	EncOpenParam	vpu_encOP;
-	EncInitialInfo	vpu_initialInfo;
-	EncParam	vpu_encParam;
-	EncOutputInfo	vpu_outputInfo;
+	EncHandle vpu_handle;
+	EncOpenParam vpu_encOP;
+	EncInitialInfo vpu_initialInfo;
+	EncParam vpu_encParam;
+	EncOutputInfo vpu_outputInfo;
 	//
-	unsigned char	vpu_sps[1024];
-	unsigned int	vpu_spslen;
-	unsigned char	vpu_pps[1024];
-	unsigned int	vpu_ppslen;
+	unsigned char vpu_sps[1024];
+	unsigned int vpu_spslen;
+	unsigned char vpu_pps[1024];
+	unsigned int vpu_ppslen;
 	//
-	unsigned char	*vpu_bitstreamVirt;
-	unsigned long	vpu_bitstreamPhy;
+	unsigned char* vpu_bitstreamVirt;
+	unsigned long vpu_bitstreamPhy;
 	//
-	FrameBuffer	vpu_frames[VPU_ENC_MAX_FRAME];
-	int		vpu_nframes;
+	FrameBuffer vpu_frames[VPU_ENC_MAX_FRAME];
+	int vpu_nframes;
 	//
-	FrameBuffer	vpu_InBuffer;
-	unsigned char 	*vpu_InBufferVirt;
-	unsigned long	vpu_InBufferPhy;
+	FrameBuffer vpu_InBuffer;
+	unsigned char* vpu_InBufferVirt;
+	unsigned long vpu_InBufferPhy;
 	// for managing physical memories
-	PhyMemInfo	vpu_phymem;
+	PhyMemInfo vpu_phymem;
 	//
-}	vpu_context_t;
+} vpu_context_t;
 
-int vpu_encoder_init(vpu_context_t *ctx, int width, int height, int fps_n, int fps_d, int bitrate, int gopsize);
-int vpu_encoder_deinit(vpu_context_t *ctx);
-int vpu_encoder_reconfigure(vpu_context_t *ctx, int bitrateKbps, unsigned int framerate);
-const unsigned char * vpu_encoder_get_h264_sps(vpu_context_t *ctx, int *size);
-const unsigned char * vpu_encoder_get_h264_pps(vpu_context_t *ctx, int *size);
-unsigned char * vpu_encoder_encode(vpu_context_t *ctx, unsigned char *frame, int framesize, int *encsize);
+int vpu_encoder_init(vpu_context_t* ctx, int width, int height, int fps_n, int fps_d, int bitrate, int gopsize);
+int vpu_encoder_deinit(vpu_context_t* ctx);
+int vpu_encoder_reconfigure(vpu_context_t* ctx, int bitrateKbps, unsigned int framerate);
+const unsigned char* vpu_encoder_get_h264_sps(vpu_context_t* ctx, int* size);
+const unsigned char* vpu_encoder_get_h264_pps(vpu_context_t* ctx, int* size);
+unsigned char* vpu_encoder_encode(vpu_context_t* ctx, unsigned char* frame, int framesize, int* encsize);
 
 #endif /* __VPU_COMMON_H__ */
-

@@ -18,7 +18,7 @@
 
 /**
  * @file
- * GamingAnywhere's common functions for Windows 
+ * GamingAnywhere's common functions for Windows
  *
  * This includes Windows specific functions and
  * common UNIX function implementations for Windows.
@@ -27,9 +27,9 @@
 #include "common.hpp"
 
 #if defined(_MSC_VER) || defined(_MSC_EXTENSIONS) || defined(__WATCOMC__)
-#define DELTA_EPOCH_IN_USEC	11644473600000000Ui64
+#define DELTA_EPOCH_IN_USEC 11644473600000000Ui64
 #else
-#define DELTA_EPOCH_IN_USEC	11644473600000000ULL
+#define DELTA_EPOCH_IN_USEC 11644473600000000ULL
 #endif
 
 typedef unsigned __int64 u_int64_t;
@@ -40,12 +40,12 @@ typedef unsigned __int64 u_int64_t;
  * @param ft [in] Pointer to a FILETIME.
  * @return UNIX timestamp time in microsecond unit.
  */
-static u_int64_t
-filetime_to_unix_epoch(const FILETIME *ft) {
-	u_int64_t res = (u_int64_t) ft->dwHighDateTime << 32;
+static u_int64_t filetime_to_unix_epoch(const FILETIME* ft)
+{
+	u_int64_t res = (u_int64_t)ft->dwHighDateTime << 32;
 	res |= ft->dwLowDateTime;
-	res /= 10;                   /* from 100 nano-sec periods to usec */
-	res -= DELTA_EPOCH_IN_USEC;  /* from Win epoch to Unix epoch */
+	res /= 10;						 /* from 100 nano-sec periods to usec */
+	res -= DELTA_EPOCH_IN_USEC; /* from Win epoch to Unix epoch */
 	return (res);
 }
 
@@ -55,22 +55,23 @@ filetime_to_unix_epoch(const FILETIME *ft) {
  * @param tv [in] \a timeval to store the timestamp.
  * @param tz [in] timezone: unused.
  */
-int
-gettimeofday(struct timeval *tv, void *tz) {
-	FILETIME  ft;
+int gettimeofday(struct timeval* tv, void* tz)
+{
+	FILETIME ft;
 	u_int64_t tim;
-	if (!tv) {
-		//errno = EINVAL;
+	if(!tv)
+	{
+		// errno = EINVAL;
 		return (-1);
 	}
 	GetSystemTimeAsFileTime(&ft);
-	tim = filetime_to_unix_epoch (&ft);
-	tv->tv_sec  = (long) (tim / 1000000L);
-	tv->tv_usec = (long) (tim % 1000000L);
+	tim			= filetime_to_unix_epoch(&ft);
+	tv->tv_sec	= (long)(tim / 1000000L);
+	tv->tv_usec = (long)(tim % 1000000L);
 	return (0);
 }
 
-long long tvdiff_us(struct timeval *tv1, struct timeval *tv2);
+long long tvdiff_us(struct timeval* tv1, struct timeval* tv2);
 
 /**
  * usleep() function: sleep in microsecond scale.
@@ -78,8 +79,8 @@ long long tvdiff_us(struct timeval *tv1, struct timeval *tv2);
  * @param waitTime [in] time to sleep (in microseconds).
  * @return Always return 0.
  */
-int
-usleep(long long waitTime) {
+int usleep(long long waitTime)
+{
 #if 0
 	LARGE_INTEGER t1, t2, freq;
 #else
@@ -102,20 +103,23 @@ usleep(long long waitTime) {
 	// Sleep() may be fine
 	ms = waitTime / 1000;
 	waitTime %= 1000;
-	if(ms > 0) {
+	if(ms > 0)
+	{
 		Sleep(ms);
 	}
 	// Sleep for the rest
-	if(waitTime > 0) do {
+	if(waitTime > 0)
+		do
+		{
 #if 0
 		QueryPerformanceCounter(&t2);
 
 		elapsed = 1000000.0 * (t2.QuadPart - t1.QuadPart) / freq.QuadPart;
 #else
-		gettimeofday(&t2, NULL);
-		elapsed = tvdiff_us(&t2, &t1);
+			gettimeofday(&t2, NULL);
+			elapsed = tvdiff_us(&t2, &t1);
 #endif
-	} while(elapsed < waitTime);
+		} while(elapsed < waitTime);
 	//
 	return 0;
 }
@@ -128,10 +132,7 @@ usleep(long long waitTime) {
  * @param count [in] Size limit of the \a buf.
  * @return Number of bytes received, see MSDN recv() function.
  */
-int
-read(SOCKET fd, void *buf, int count) {
-	return recv(fd, (char *) buf, count, 0);
-}
+int read(SOCKET fd, void* buf, int count) { return recv(fd, (char*)buf, count, 0); }
 
 /**
  * write() function to write to a socket.
@@ -141,10 +142,7 @@ read(SOCKET fd, void *buf, int count) {
  * @param count [in] Number of bytes in the \a buf.
  * @return Number of bytes sent, see MSDN send() function.
  */
-int
-write(SOCKET fd, const void *buf, int count) {
-	return send(fd, (const char*) buf, count, 0);
-}
+int write(SOCKET fd, const void* buf, int count) { return send(fd, (const char*)buf, count, 0); }
 
 /**
  * close() function to close a socket.
@@ -152,18 +150,15 @@ write(SOCKET fd, const void *buf, int count) {
  * @param fd [in] The SOCKET identifier.
  * @return Zero on success, otherwise see MSDN closesocket() function.
  */
-int
-close(SOCKET fd) {
-	return closesocket(fd);
-}
+int close(SOCKET fd) { return closesocket(fd); }
 
 /**
  * dlerror() to report error message of dl* functions
  *
  * Not supported on Windows.
  */
-char *
-dlerror() {
+char* dlerror()
+{
 	static char notsupported[] = "dlerror() on Windows is not supported.";
 	return notsupported;
 }
@@ -176,18 +171,16 @@ dlerror() {
  * @param h [in] The height of the bitmap image.
  * @param bitsPerPixel [in] The bits-per-pixel of the bitmap image.
  */
-void
-ga_win32_fill_bitmap_info(BITMAPINFO *pinfo, int w, int h, int bitsPerPixel) {
+void ga_win32_fill_bitmap_info(BITMAPINFO* pinfo, int w, int h, int bitsPerPixel)
+{
 	ZeroMemory(pinfo, sizeof(BITMAPINFO));
-	pinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	pinfo->bmiHeader.biBitCount = bitsPerPixel;
+	pinfo->bmiHeader.biSize			 = sizeof(BITMAPINFOHEADER);
+	pinfo->bmiHeader.biBitCount	 = bitsPerPixel;
 	pinfo->bmiHeader.biCompression = BI_RGB;
-	pinfo->bmiHeader.biWidth = w;
-	pinfo->bmiHeader.biHeight = h;
-	pinfo->bmiHeader.biPlanes = 1; // must be 1
-	pinfo->bmiHeader.biSizeImage = pinfo->bmiHeader.biHeight
-					* pinfo->bmiHeader.biWidth
-					* pinfo->bmiHeader.biBitCount/8;
+	pinfo->bmiHeader.biWidth		 = w;
+	pinfo->bmiHeader.biHeight		 = h;
+	pinfo->bmiHeader.biPlanes		 = 1; // must be 1
+	pinfo->bmiHeader.biSizeImage	 = pinfo->bmiHeader.biHeight * pinfo->bmiHeader.biWidth * pinfo->bmiHeader.biBitCount / 8;
 	return;
 }
 
@@ -199,41 +192,44 @@ ga_win32_fill_bitmap_info(BITMAPINFO *pinfo, int w, int h, int bitsPerPixel) {
  * @param freq [in] The performance frequency obtained by \em QueryPerformanceFrequency().
  * @return Time differece in microsecond unit, e.g., \a t1 - \a t2.
  */
-long long
-pcdiff_us(LARGE_INTEGER t1, LARGE_INTEGER t2, LARGE_INTEGER freq) {
+long long pcdiff_us(LARGE_INTEGER t1, LARGE_INTEGER t2, LARGE_INTEGER freq)
+{
 	return 1000000LL * (t1.QuadPart - t2.QuadPart) / freq.QuadPart;
 }
 
 typedef enum GA_PROCESS_DPI_AWARENESS {
-	GA_PROCESS_DPI_UNAWARE = 0,
-	GA_PROCESS_SYSTEM_DPI_AWARE = 1,
+	GA_PROCESS_DPI_UNAWARE				= 0,
+	GA_PROCESS_SYSTEM_DPI_AWARE		= 1,
 	GA_PROCESS_PER_MONITOR_DPI_AWARE = 2
 } GA_PROCESS_DPI_AWARENESS;
-typedef BOOL (WINAPI * setProcessDpiAware_t)(void);
-typedef HRESULT (WINAPI * setProcessDpiAwareness_t)(GA_PROCESS_DPI_AWARENESS);
+typedef BOOL(WINAPI* setProcessDpiAware_t)(void);
+typedef HRESULT(WINAPI* setProcessDpiAwareness_t)(GA_PROCESS_DPI_AWARENESS);
 
 /**
  * Platform dependent call to SetProcessDpiAware(PROCESS_PER_MONITOR_DPI_AWARE)
  */
 EXPORT
-int
-ga_set_process_dpi_aware() {
+int ga_set_process_dpi_aware()
+{
 	HMODULE shcore, user32;
-	setProcessDpiAware_t     aw = NULL;
+	setProcessDpiAware_t aw			  = NULL;
 	setProcessDpiAwareness_t awness = NULL;
-	int ret = 0;
+	int ret								  = 0;
 	if((shcore = LoadLibraryA("shcore.dll")))
-		awness = (setProcessDpiAwareness_t) GetProcAddress(shcore, "SetProcessDpiAwareness");
+		awness = (setProcessDpiAwareness_t)GetProcAddress(shcore, "SetProcessDpiAwareness");
 	if((user32 = LoadLibraryA("user32.dll")))
-		aw = (setProcessDpiAware_t) GetProcAddress(user32, "SetProcessDPIAware");
-	if(awness) {
-		ret = (int) (awness(GA_PROCESS_PER_MONITOR_DPI_AWARE) == S_OK);
-	} else if(aw) {
-		ret = (int) (aw() != 0);
+		aw = (setProcessDpiAware_t)GetProcAddress(user32, "SetProcessDPIAware");
+	if(awness)
+	{
+		ret = (int)(awness(GA_PROCESS_PER_MONITOR_DPI_AWARE) == S_OK);
 	}
-	if(user32) FreeLibrary(user32);
-	if(shcore) FreeLibrary(shcore);
+	else if(aw)
+	{
+		ret = (int)(aw() != 0);
+	}
+	if(user32)
+		FreeLibrary(user32);
+	if(shcore)
+		FreeLibrary(shcore);
 	return ret;
 }
-
-

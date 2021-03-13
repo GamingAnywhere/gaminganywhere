@@ -21,20 +21,23 @@
 
 #include <FramedSource.hh>
 
-class GAAudioLiveSource : public FramedSource {
-public:
-	static GAAudioLiveSource * createNew(UsageEnvironment& env, int cid/* TODO: more params */);
+class GAAudioLiveSource : public FramedSource
+{
+  public:
+	static GAAudioLiveSource* createNew(UsageEnvironment& env, int cid /* TODO: more params */);
 	static EventTriggerId eventTriggerId;
-protected:
+
+  protected:
 	GAAudioLiveSource(UsageEnvironment& env, int cid);
 	~GAAudioLiveSource();
-private:
+
+  private:
 	static unsigned referenceCount;
 	int channelId;
 	//
 	static void deliverFrame0(void* clientData);
 	void doGetNextFrame();
-	//virtual void doStopGettingFrames(); // optional
+	// virtual void doStopGettingFrames(); // optional
 	void deliverFrame();
 };
 

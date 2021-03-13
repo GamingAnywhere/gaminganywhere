@@ -18,20 +18,22 @@
 
 #include "ga-win32-common.h"
 
-int
-ga_win32_draw_system_cursor(vsource_frame_t *frame) {
-	static int capture_cursor = -1;
-	static unsigned char bitmask[8] = {
-		0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01
-	};
+int ga_win32_draw_system_cursor(vsource_frame_t* frame)
+{
+	static int capture_cursor		  = -1;
+	static unsigned char bitmask[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
 	int i, j, ptx, pty;
 	int ret = -1;
 	//
-	if(capture_cursor < 0) {
-		if(ga_conf_readbool("capture-cursor", 0) != 0) {
+	if(capture_cursor < 0)
+	{
+		if(ga_conf_readbool("capture-cursor", 0) != 0)
+		{
 			ga_error("vsource: capture-cursor enabled.\n");
 			capture_cursor = 1;
-		} else {
+		}
+		else
+		{
 			capture_cursor = 0;
 		}
 	}
@@ -46,43 +48,49 @@ ga_win32_draw_system_cursor(vsource_frame_t *frame) {
 	//
 	bzero(&cinfo, sizeof(cinfo));
 	cinfo.cbSize = sizeof(cinfo);
-	if(GetCursorInfo(&cinfo) == FALSE) {
+	if(GetCursorInfo(&cinfo) == FALSE)
+	{
 		ga_error("vsource: GetCursorInfo failed, capture-cursor disabled.\n");
 		capture_cursor = 0;
 		return -1;
 	}
 	if(cinfo.flags != CURSOR_SHOWING)
 		return 0;
-	if((hc = CopyCursor(cinfo.hCursor)) == NULL) {
+	if((hc = CopyCursor(cinfo.hCursor)) == NULL)
+	{
 		ga_error("vsource: CopyCursor failed, err = 0x%08x.\n", GetLastError());
 		return -1;
 	}
-	if(GetIconInfo((HICON) hc, &iinfo) == FALSE) {
+	if(GetIconInfo((HICON)hc, &iinfo) == FALSE)
+	{
 		ga_error("vsource: GetIconInfo failed.\n");
 		goto quitFreeCursor;
 	}
 	//
 	GetObject(iinfo.hbmMask, sizeof(mask), &mask);
 	msize = mask.bmHeight * mask.bmWidthBytes;
-	if(iinfo.hbmColor != NULL) {
+	if(iinfo.hbmColor != NULL)
+	{
 		GetObject(iinfo.hbmColor, sizeof(cursor), &cursor);
 		csize = cursor.bmHeight * cursor.bmWidthBytes;
 	}
-	if(iinfo.hbmColor == NULL) {	// B/W cursor
+	if(iinfo.hbmColor == NULL)
+	{ // B/W cursor
 		unsigned char mbits[8192];
 		unsigned char *mcurr, *ccurr, *fcurr;
-		if(mask.bmBitsPixel != 1) {
-			ga_error("vsource: unsupported B/W cursor bitsPixel - m:%d%s1\n",
-				mask.bmBitsPixel, mask.bmBitsPixel == 1 ? "==" : "!=");
+		if(mask.bmBitsPixel != 1)
+		{
+			ga_error("vsource: unsupported B/W cursor bitsPixel - m:%d%s1\n", mask.bmBitsPixel, mask.bmBitsPixel == 1 ? "==" : "!=");
 			goto quitFreeIconinfo;
 		}
-		if(msize > sizeof(mbits)) {
+		if(msize > sizeof(mbits))
+		{
 			ga_error("vsource: B/W cursor too loarge, ignored.\n");
 			goto quitFreeIconinfo;
 		}
-		if(mask.bmHeight != mask.bmWidth<<1) {
-			ga_error("vsource: Bad B/W cursor size (%dx%d)\n",
-				mask.bmWidth, mask.bmHeight);
+		if(mask.bmHeight != mask.bmWidth << 1)
+		{
+			ga_error("vsource: Bad B/W cursor size (%dx%d)\n", mask.bmWidth, mask.bmHeight);
 			goto quitFreeIconinfo;
 		}
 		GetBitmapBits(iinfo.hbmMask, msize, mbits);
@@ -96,8 +104,9 @@ ga_win32_draw_system_cursor(vsource_frame_t *frame) {
 			mask.bmBitsPixel,
 			mask.bmWidthBytes);
 #endif
-		mask.bmHeight = mask.bmHeight>>1;
-		for(i = 0; i < mask.bmHeight; i++) {
+		mask.bmHeight = mask.bmHeight >> 1;
+		for(i = 0; i < mask.bmHeight; i++)
+		{
 			pty = cinfo.ptScreenPos.y - iinfo.yHotspot + i;
 			if(pty < 0)
 				continue;
@@ -106,41 +115,53 @@ ga_win32_draw_system_cursor(vsource_frame_t *frame) {
 			mcurr = mbits + i * mask.bmWidthBytes;
 			ccurr = mbits + (mask.bmHeight + i) * mask.bmWidthBytes;
 			fcurr = frame->imgbuf + (pty * frame->realstride);
-			for(j = 0; j < mask.bmWidth; j++) {
+			for(j = 0; j < mask.bmWidth; j++)
+			{
 				ptx = cinfo.ptScreenPos.x - iinfo.xHotspot + j;
 				if(ptx < 0)
 					continue;
 				if(ptx >= frame->realwidth)
 					break;
-				if((mcurr[j>>3] & bitmask[j&0x07]) == 0) {
-					if((ccurr[j>>3] & bitmask[j&0x07]) != 0) {
-						fcurr[ptx*4+0] = 0xff;//= 0;
-						fcurr[ptx*4+1] = 0xff;//= 0;
-						fcurr[ptx*4+2] = 0xff;//= 0;
-						//fcurr[ptx*4+3] = 0xff;
+				if((mcurr[j >> 3] & bitmask[j & 0x07]) == 0)
+				{
+					if((ccurr[j >> 3] & bitmask[j & 0x07]) != 0)
+					{
+						fcurr[ptx * 4 + 0] = 0xff; //= 0;
+						fcurr[ptx * 4 + 1] = 0xff; //= 0;
+						fcurr[ptx * 4 + 2] = 0xff; //= 0;
+															// fcurr[ptx*4+3] = 0xff;
 					}
-				} else {
-					if((ccurr[j>>3] & bitmask[j&0x07]) != 0) {
-						fcurr[ptx*4+0] ^= 0xff;//= 0;
-						fcurr[ptx*4+1] ^= 0xff;//= 0;
-						fcurr[ptx*4+2] ^= 0xff;//= 0;
-						//fcurr[ptx*4+3] = 0xff;
+				}
+				else
+				{
+					if((ccurr[j >> 3] & bitmask[j & 0x07]) != 0)
+					{
+						fcurr[ptx * 4 + 0] ^= 0xff; //= 0;
+						fcurr[ptx * 4 + 1] ^= 0xff; //= 0;
+						fcurr[ptx * 4 + 2] ^= 0xff; //= 0;
+															 // fcurr[ptx*4+3] = 0xff;
 					}
 				}
 			}
 		}
-	} else {			// color cursor
+	}
+	else
+	{ // color cursor
 		unsigned char mbits[8192];
 		unsigned char cbits[262144];
 		unsigned char *mcurr, *ccurr, *fcurr;
 		// Color
-		if(mask.bmBitsPixel != 1 || cursor.bmBitsPixel != 32) {
+		if(mask.bmBitsPixel != 1 || cursor.bmBitsPixel != 32)
+		{
 			ga_error("vsource: unsupported cursor bitsPixel - m:%d%s1, c:%d%s32\n",
-				mask.bmBitsPixel, mask.bmBitsPixel == 1 ? "==" : "!=",
-				cursor.bmBitsPixel, cursor.bmBitsPixel == 32 ? "==" : "!=");
+						mask.bmBitsPixel,
+						mask.bmBitsPixel == 1 ? "==" : "!=",
+						cursor.bmBitsPixel,
+						cursor.bmBitsPixel == 32 ? "==" : "!=");
 			goto quitFreeIconinfo;
 		}
-		if(msize > sizeof(mbits) || csize > sizeof(cbits)) {
+		if(msize > sizeof(mbits) || csize > sizeof(cbits))
+		{
 			ga_error("vsource: cursor too loarge (> 256x256), ignored.\n");
 			goto quitFreeIconinfo;
 		}
@@ -157,7 +178,8 @@ ga_win32_draw_system_cursor(vsource_frame_t *frame) {
 			mask.bmBitsPixel, cursor.bmBitsPixel,
 			mask.bmWidthBytes, cursor.bmWidthBytes);
 #endif
-		for(i = 0; i < mask.bmHeight; i++) {
+		for(i = 0; i < mask.bmHeight; i++)
+		{
 			pty = cinfo.ptScreenPos.y - iinfo.yHotspot + i;
 			if(pty < 0)
 				continue;
@@ -166,35 +188,40 @@ ga_win32_draw_system_cursor(vsource_frame_t *frame) {
 			mcurr = mbits + i * mask.bmWidthBytes;
 			ccurr = cbits + i * cursor.bmWidthBytes;
 			fcurr = frame->imgbuf + (pty * frame->realstride);
-			for(j = 0; j < mask.bmWidth; j++) {
+			for(j = 0; j < mask.bmWidth; j++)
+			{
 				ptx = cinfo.ptScreenPos.x - iinfo.xHotspot + j;
 				if(ptx < 0)
 					continue;
 				if(ptx >= frame->realwidth)
 					break;
-				if((mcurr[j>>3] & bitmask[j&0x07]) == 0) {
-				fcurr[ptx*4+0] = ccurr[j*4+0];
-				fcurr[ptx*4+1] = ccurr[j*4+1];
-				fcurr[ptx*4+2] = ccurr[j*4+2];
-				//fcurr[ptx*4+3] = ccurr[j*4+3];
-				} else {
-				fcurr[ptx*4+0] ^= ccurr[j*4+0];
-				fcurr[ptx*4+1] ^= ccurr[j*4+1];
-				fcurr[ptx*4+2] ^= ccurr[j*4+2];
-				//fcurr[ptx*4+3] = ccurr[j*4+3];
+				if((mcurr[j >> 3] & bitmask[j & 0x07]) == 0)
+				{
+					fcurr[ptx * 4 + 0] = ccurr[j * 4 + 0];
+					fcurr[ptx * 4 + 1] = ccurr[j * 4 + 1];
+					fcurr[ptx * 4 + 2] = ccurr[j * 4 + 2];
+					// fcurr[ptx*4+3] = ccurr[j*4+3];
+				}
+				else
+				{
+					fcurr[ptx * 4 + 0] ^= ccurr[j * 4 + 0];
+					fcurr[ptx * 4 + 1] ^= ccurr[j * 4 + 1];
+					fcurr[ptx * 4 + 2] ^= ccurr[j * 4 + 2];
+					// fcurr[ptx*4+3] = ccurr[j*4+3];
 				}
 			}
 		}
 	}
 	ret = 0;
 quitFreeIconinfo:
-	if(iinfo.hbmMask != NULL)	DeleteObject(iinfo.hbmMask);
-	if(iinfo.hbmColor!= NULL)	DeleteObject(iinfo.hbmColor);
+	if(iinfo.hbmMask != NULL)
+		DeleteObject(iinfo.hbmMask);
+	if(iinfo.hbmColor != NULL)
+		DeleteObject(iinfo.hbmColor);
 quitFreeCursor:
 	DestroyCursor(hc);
-#else	/* ! WIN32 */
+#else /* ! WIN32 */
 	ret = 0;
 #endif
 	return ret;
 }
-

@@ -19,43 +19,27 @@
 #ifndef __GA_HOOK_COREAUDIO_H__
 #define __GA_HOOK_COREAUDIO_H__
 
-#include <mmdeviceapi.h>
-#include <audioclient.h>
-
 #include "hook-common.h"
 
+#include <audioclient.h>
+#include <mmdeviceapi.h>
+
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-typedef HRESULT (STDMETHODCALLTYPE *t_GetBuffer)( 
-	IAudioRenderClient *thiz,
-	UINT32 NumFramesRequested,
-	BYTE **ppData);
-typedef HRESULT (STDMETHODCALLTYPE *t_ReleaseBuffer)( 
-	IAudioRenderClient *thiz,
-	UINT32 NumFramesWritten,
-	DWORD dwFlags);
-typedef HRESULT (STDMETHODCALLTYPE *t_GetMixFormat)( 
-	IAudioClient *thiz,
-	WAVEFORMATEX **ppDeviceFormat);
+	typedef HRESULT(STDMETHODCALLTYPE* t_GetBuffer)(IAudioRenderClient* thiz, UINT32 NumFramesRequested, BYTE** ppData);
+	typedef HRESULT(STDMETHODCALLTYPE* t_ReleaseBuffer)(IAudioRenderClient* thiz, UINT32 NumFramesWritten, DWORD dwFlags);
+	typedef HRESULT(STDMETHODCALLTYPE* t_GetMixFormat)(IAudioClient* thiz, WAVEFORMATEX** ppDeviceFormat);
 #ifdef __cplusplus
 }
 #endif
 
 // prototypes
-DllExport HRESULT __stdcall hook_GetBuffer( 
-		IAudioRenderClient *thiz,
-		UINT32 NumFramesRequested,
-		BYTE **ppData);
-DllExport HRESULT __stdcall hook_ReleaseBuffer( 
-		IAudioRenderClient *thiz,
-		UINT32 NumFramesWritten,
-		DWORD dwFlags);
-DllExport HRESULT __stdcall hook_GetMixFormat( 
-		IAudioClient *thiz,
-		WAVEFORMATEX **ppDeviceFormat);
+DllExport HRESULT __stdcall hook_GetBuffer(IAudioRenderClient* thiz, UINT32 NumFramesRequested, BYTE** ppData);
+DllExport HRESULT __stdcall hook_ReleaseBuffer(IAudioRenderClient* thiz, UINT32 NumFramesWritten, DWORD dwFlags);
+DllExport HRESULT __stdcall hook_GetMixFormat(IAudioClient* thiz, WAVEFORMATEX** ppDeviceFormat);
 
 int hook_coreaudio();
 
 #endif
-

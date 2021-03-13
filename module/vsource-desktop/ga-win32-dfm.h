@@ -19,12 +19,12 @@
 #ifndef __XCAP_WIN32_DFM_H__
 #define __XCAP_WIN32_DFM_H__
 
-#include "ga-common.h"
 #include "ga-avcodec.h"
+#include "ga-common.h"
 
-int ga_win32_DFM_init(struct gaImage *image);
+int ga_win32_DFM_init(struct gaImage* image);
 void ga_win32_DFM_deinit();
-int ga_win32_DFM_capture(char *buf, int buflen, struct gaRect *grect);
-//int ga_win32_DFM_capture_YUV(struct SwsContext *swsctx, char *buf, int buflen, int *lsize);
+int ga_win32_DFM_capture(char* buf, int buflen, struct gaRect* grect);
+// int ga_win32_DFM_capture_YUV(struct SwsContext *swsctx, char *buf, int buflen, int *lsize);
 
 #endif

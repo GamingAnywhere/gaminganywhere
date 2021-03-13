@@ -21,8 +21,8 @@
 #ifndef AVFORMAT_RTP_H
 #define AVFORMAT_RTP_H
 
-#include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
+#include "libavformat/avformat.h"
 
 /**
  * Return the payload type for a given stream used in the given format context.
@@ -35,8 +35,7 @@
  * @param idx   The stream index
  * @return The payload type (the 'PT' field in the RTP header).
  */
-int ff_rtp_get_payload_type(AVFormatContext *fmt, AVCodecContext *codec,
-                            int idx);
+int ff_rtp_get_payload_type(AVFormatContext* fmt, AVCodecContext* codec, int idx);
 
 /**
  * Initialize a codec context based on the payload type.
@@ -50,7 +49,7 @@ int ff_rtp_get_payload_type(AVFormatContext *fmt, AVCodecContext *codec,
  * @return In case of unknown payload type or dynamic payload type, a
  * negative value is returned; otherwise, 0 is returned
  */
-int ff_rtp_get_codec_info(AVCodecContext *codec, int payload_type);
+int ff_rtp_get_codec_info(AVCodecContext* codec, int payload_type);
 
 /**
  * Return the encoding name (as defined in
@@ -61,7 +60,7 @@ int ff_rtp_get_codec_info(AVCodecContext *codec, int payload_type);
  * to an empty string is returned; otherwise, a pointer to a string containing
  * the encoding name is returned
  */
-const char *ff_rtp_enc_name(int payload_type);
+const char* ff_rtp_enc_name(int payload_type);
 
 /**
  * Return the codec id for the given encoding name and codec type.
@@ -71,11 +70,11 @@ const char *ff_rtp_enc_name(int payload_type);
  * @return In case of unknown encoding name, AV_CODEC_ID_NONE is returned;
  * otherwise, the codec id is returned
  */
-enum AVCodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type);
+enum AVCodecID ff_rtp_codec_id(const char* buf, enum AVMediaType codec_type);
 
 #define RTP_PT_PRIVATE 96
-#define RTP_VERSION 2
-#define RTP_MAX_SDES 256   /**< maximum text length for SDES */
+#define RTP_VERSION	  2
+#define RTP_MAX_SDES	  256 /**< maximum text length for SDES */
 
 /* RTCP packets use 0.5% of the bandwidth */
 #define RTCP_TX_RATIO_NUM 5
@@ -89,24 +88,23 @@ enum AVCodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type);
 
 /* RTCP packet types */
 enum RTCPType {
-    RTCP_FIR    = 192,
-    RTCP_NACK, // 193
-    RTCP_SMPTETC,// 194
-    RTCP_IJ,   // 195
-    RTCP_SR     = 200,
-    RTCP_RR,   // 201
-    RTCP_SDES, // 202
-    RTCP_BYE,  // 203
-    RTCP_APP,  // 204
-    RTCP_RTPFB,// 205
-    RTCP_PSFB, // 206
-    RTCP_XR,   // 207
-    RTCP_AVB,  // 208
-    RTCP_RSI,  // 209
-    RTCP_TOKEN,// 210
+	RTCP_FIR = 192,
+	RTCP_NACK,	  // 193
+	RTCP_SMPTETC, // 194
+	RTCP_IJ,		  // 195
+	RTCP_SR = 200,
+	RTCP_RR,		// 201
+	RTCP_SDES,	// 202
+	RTCP_BYE,	// 203
+	RTCP_APP,	// 204
+	RTCP_RTPFB, // 205
+	RTCP_PSFB,	// 206
+	RTCP_XR,		// 207
+	RTCP_AVB,	// 208
+	RTCP_RSI,	// 209
+	RTCP_TOKEN, // 210
 };
 
-#define RTP_PT_IS_RTCP(x) (((x) >= RTCP_FIR && (x) <= RTCP_IJ) || \
-                           ((x) >= RTCP_SR  && (x) <= RTCP_TOKEN))
+#define RTP_PT_IS_RTCP(x) (((x) >= RTCP_FIR && (x) <= RTCP_IJ) || ((x) >= RTCP_SR && (x) <= RTCP_TOKEN))
 
 #endif /* AVFORMAT_RTP_H */

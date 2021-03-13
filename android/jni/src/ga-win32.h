@@ -1,1 +1,1 @@
-../../../core/ga-win32.h
+../../../ core / ga - win32.h

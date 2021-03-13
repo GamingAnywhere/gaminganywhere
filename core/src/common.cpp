@@ -26,9 +26,9 @@
 #include <execinfo.h>
 #endif /* !ANDROID */
 #include <signal.h>
-#include <unistd.h>
-#include <sys/time.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
+#include <unistd.h>
 #endif /* !WIN32 */
 #ifdef ANDROID
 #include <android/log.h>
@@ -48,20 +48,17 @@
 #endif
 #include "rtsp_conf.hpp"
 
-#include <map>
 #include <list>
+#include <map>
 using namespace std;
 
 #ifndef NIPQUAD
 /** For printing IPv4 addresses: convert an unsigned int to 4 unsigned char. */
-#define NIPQUAD(x)	((unsigned char*)&(x))[0],	\
-			((unsigned char*)&(x))[1],	\
-			((unsigned char*)&(x))[2],	\
-			((unsigned char*)&(x))[3]
+#define NIPQUAD(x) ((unsigned char*)&(x))[0], ((unsigned char*)&(x))[1], ((unsigned char*)&(x))[2], ((unsigned char*)&(x))[3]
 #endif
 
 /** The gloabl log file name */
-static char *ga_logfile = NULL;
+static char* ga_logfile = NULL;
 
 /**
  * Compute the time difference for two \a timeval data structure, i.e.,
@@ -72,16 +69,17 @@ static char *ga_logfile = NULL;
  * @return The difference in micro seconds.
  */
 EXPORT
-long long
-tvdiff_us(struct timeval *tv1, struct timeval *tv2) {
+long long tvdiff_us(struct timeval* tv1, struct timeval* tv2)
+{
 	struct timeval delta;
-	delta.tv_sec = tv1->tv_sec - tv2->tv_sec;
+	delta.tv_sec  = tv1->tv_sec - tv2->tv_sec;
 	delta.tv_usec = tv1->tv_usec - tv2->tv_usec;
-	if(delta.tv_usec < 0) {
+	if(delta.tv_usec < 0)
+	{
 		delta.tv_sec--;
 		delta.tv_usec += 1000000;
 	}
-	return 1000000LL*delta.tv_sec + delta.tv_usec;
+	return 1000000LL * delta.tv_sec + delta.tv_usec;
 }
 
 /**
@@ -106,14 +104,16 @@ tvdiff_us(struct timeval *tv1, struct timeval *tv2) {
  * time is not specified.
  */
 EXPORT
-long long
-ga_usleep(long long interval, struct timeval *ptv) {
+long long ga_usleep(long long interval, struct timeval* ptv)
+{
 	long long delta;
 	struct timeval tv;
-	if(ptv != NULL) {
+	if(ptv != NULL)
+	{
 		gettimeofday(&tv, NULL);
 		delta = tvdiff_us(&tv, ptv);
-		if(delta >= interval) {
+		if(delta >= interval)
+		{
 			usleep(1);
 			return -1;
 		}
@@ -133,12 +133,13 @@ ga_usleep(long long interval, struct timeval *ptv) {
  * This function is SLOW, but it attempts to make all writes successfull.
  * It appends the message into the file each time when it is called.
  */
-static void
-ga_writelog(struct timeval tv, const char *s) {
-	FILE *fp;
+static void ga_writelog(struct timeval tv, const char* s)
+{
+	FILE* fp;
 	if(ga_logfile == NULL)
 		return;
-	if((fp = fopen(ga_logfile, "at")) != NULL) {
+	if((fp = fopen(ga_logfile, "at")) != NULL)
+	{
 		fprintf(fp, "[%d] %ld.%06ld %s", getpid(), tv.tv_sec, tv.tv_usec, s);
 		fclose(fp);
 	}
@@ -156,8 +157,8 @@ ga_writelog(struct timeval tv, const char *s) {
  * the message into a log file if log feature is turned on.
  */
 EXPORT
-int
-ga_log(const char *fmt, ...) {
+int ga_log(const char* fmt, ...)
+{
 	char msg[4096];
 	struct timeval tv;
 	va_list ap;
@@ -188,8 +189,8 @@ ga_log(const char *fmt, ...) {
  * It outputs a timestamp before the message.
  */
 EXPORT
-int
-ga_error(const char *fmt, ...) {
+int ga_error(const char* fmt, ...)
+{
 	char msg[4096];
 	struct timeval tv;
 	va_list ap;
@@ -222,14 +223,14 @@ ga_error(const char *fmt, ...) {
  * Data should be stored starting from \a *ptr + \a *alignment.
  */
 EXPORT
-int
-ga_malloc(int size, void **ptr, int *alignment) {
-	if((*ptr = malloc(size+16)) == NULL)
+int ga_malloc(int size, void** ptr, int* alignment)
+{
+	if((*ptr = malloc(size + 16)) == NULL)
 		return -1;
 #ifdef __x86_64__
-	*alignment = 16 - (((unsigned long long) *ptr) & 0x0f);
+	*alignment = 16 - (((unsigned long long)*ptr) & 0x0f);
 #else
-	*alignment = 16 - (((unsigned) *ptr) & 0x0f);
+	*alignment = 16 - (((unsigned)*ptr) & 0x0f);
 #endif
 	return 0;
 }
@@ -245,13 +246,13 @@ ga_malloc(int size, void **ptr, int *alignment) {
  * The caller must ensure that the \a alignto value must be 2^n, n >= 0.
  */
 EXPORT
-int
-ga_alignment(void *ptr, int alignto) {
+int ga_alignment(void* ptr, int alignto)
+{
 	int mask = alignto - 1;
 #ifdef __x86_64__
-	return alignto - (((unsigned long long) ptr) & mask);
+	return alignto - (((unsigned long long)ptr) & mask);
 #else
-	return alignto - (((unsigned) ptr) & mask);
+	return alignto - (((unsigned)ptr) & mask);
 #endif
 }
 
@@ -259,8 +260,8 @@ ga_alignment(void *ptr, int alignto) {
  * Get the thread ID in long format.
  */
 EXPORT
-long
-ga_gettid() {
+long ga_gettid()
+{
 #ifdef WIN32
 	return GetCurrentThreadId();
 #elif defined __APPLE__
@@ -268,7 +269,7 @@ ga_gettid() {
 #elif defined ANDROID
 	return gettid();
 #else
-	return (pid_t) syscall(SYS_gettid);
+	return (pid_t)syscall(SYS_gettid);
 #endif
 }
 
@@ -277,11 +278,11 @@ ga_gettid() {
  *
  * @return 0 on success and -1 on error.
  */
-static int
-winsock_init() {
+static int winsock_init()
+{
 #ifdef WIN32
 	WSADATA wd;
-	if(WSAStartup(MAKEWORD(2,2), &wd) != 0)
+	if(WSAStartup(MAKEWORD(2, 2), &wd) != 0)
 		return -1;
 #endif
 	return 0;
@@ -292,21 +293,21 @@ winsock_init() {
  * This function is for debug purpose, and could be removed in the future.
  */
 EXPORT
-void
-ga_dump_codecs() {
+void ga_dump_codecs()
+{
 	int n, count;
 	char buf[8192], *ptr;
-	AVCodec *c = NULL;
-	n = snprintf(buf, sizeof(buf), "Registered codecs: ");
-	ptr = &buf[n];
-	count = 0;
-	for(c = av_codec_next(NULL); c != NULL; c = av_codec_next(c)) {
-		n = snprintf(ptr, sizeof(buf)-(ptr-buf), "%s ",
-				c->name);
+	AVCodec* c = NULL;
+	n			  = snprintf(buf, sizeof(buf), "Registered codecs: ");
+	ptr		  = &buf[n];
+	count		  = 0;
+	for(c = av_codec_next(NULL); c != NULL; c = av_codec_next(c))
+	{
+		n = snprintf(ptr, sizeof(buf) - (ptr - buf), "%s ", c->name);
 		ptr += n;
 		count++;
 	}
-	snprintf(ptr, sizeof(buf)-(ptr-buf), "(%d)\n", count);
+	snprintf(ptr, sizeof(buf) - (ptr - buf), "(%d)\n", count);
 	ga_error(buf);
 	return;
 }
@@ -319,24 +320,28 @@ ga_dump_codecs() {
  * @return 0 on success or -1 on error
  */
 EXPORT
-int
-ga_init(const char *config, const char *url) {
+int ga_init(const char* config, const char* url)
+{
 	srand(time(0));
 	winsock_init();
 #ifndef ANDROID_NO_FFMPEG
 	av_register_all();
 	avcodec_register_all();
 	avformat_network_init();
-	//ga_dump_codecs();
+	// ga_dump_codecs();
 #endif
-	if(config != NULL) {
-		if(ga_conf_load(config) < 0) {
+	if(config != NULL)
+	{
+		if(ga_conf_load(config) < 0)
+		{
 			ga_error("GA: cannot load configuration file '%s'\n", config);
 			return -1;
 		}
 	}
-	if(url != NULL) {
-		if(ga_url_parse(url) < 0) {
+	if(url != NULL)
+	{
+		if(ga_url_parse(url) < 0)
+		{
 			ga_error("GA: invalid URL '%s'\n", url);
 			return -1;
 		}
@@ -348,10 +353,7 @@ ga_init(const char *config, const char *url) {
  * Deinitialize GamingAnywhere: currently do nothing
  */
 EXPORT
-void
-ga_deinit() {
-	return;
-}
+void ga_deinit() { return; }
 
 /**
  * Enable log feature
@@ -360,14 +362,15 @@ ga_deinit() {
  * It reads the \em logfile option specified in the configuration file.
  */
 EXPORT
-void
-ga_openlog() {
+void ga_openlog()
+{
 	char fn[1024];
-	FILE *fp;
+	FILE* fp;
 	//
 	if(ga_conf_readv("logfile", fn, sizeof(fn)) == NULL)
 		return;
-	if((fp = fopen(fn, "at")) != NULL) {
+	if((fp = fopen(fn, "at")) != NULL)
+	{
 		fclose(fp);
 		ga_logfile = strdup(fn);
 	}
@@ -379,9 +382,10 @@ ga_openlog() {
  * Disable log feature
  */
 EXPORT
-void
-ga_closelog() {
-	if(ga_logfile != NULL) {
+void ga_closelog()
+{
+	if(ga_logfile != NULL)
+	{
 		free(ga_logfile);
 		ga_logfile = NULL;
 	}
@@ -398,12 +402,14 @@ ga_closelog() {
  * @param mode [in] File access mode pass to \em fopen function.
  * @return FILE pointer to the opened file.
  */
-static FILE *
-ga_save_init_internal(const char *filename, const char *mode) {
-	FILE *fp = NULL;
-	if(filename != NULL) {
+static FILE* ga_save_init_internal(const char* filename, const char* mode)
+{
+	FILE* fp = NULL;
+	if(filename != NULL)
+	{
 		fp = fopen(filename, mode);
-		if(fp == NULL) {
+		if(fp == NULL)
+		{
 			ga_error("save file: open %s failed.\n", filename);
 		}
 	}
@@ -421,10 +427,7 @@ ga_save_init_internal(const char *filename, const char *mode) {
  * All captured images will be stored in this single file.
  */
 EXPORT
-FILE *
-ga_save_init(const char *filename) {
-	return ga_save_init_internal(filename, "wb");
-}
+FILE* ga_save_init(const char* filename) { return ga_save_init_internal(filename, "wb"); }
 
 /**
  * Return the FILE pointer used to stora text-based meta-data for saved image frame.
@@ -437,10 +440,7 @@ ga_save_init(const char *filename) {
  * All stored meta-data will be stored in this single file.
  */
 EXPORT
-FILE *
-ga_save_init_txt(const char *filename) {
-	return ga_save_init_internal(filename, "wt");
-}
+FILE* ga_save_init_txt(const char* filename) { return ga_save_init_internal(filename, "wt"); }
 
 /**
  * Save arbitrary binary data.
@@ -450,8 +450,8 @@ ga_save_init_txt(const char *filename) {
  * @param size [in] Size of the data, in bytes.
  */
 EXPORT
-int
-ga_save_data(FILE *fp, unsigned char *buffer, int size) {
+int ga_save_data(FILE* fp, unsigned char* buffer, int size)
+{
 	if(fp == NULL || buffer == NULL || size < 0)
 		return -1;
 	if(size == 0)
@@ -467,8 +467,8 @@ ga_save_data(FILE *fp, unsigned char *buffer, int size) {
  * @param ... [in] Arguments for specifiers in the format string.
  */
 EXPORT
-int
-ga_save_printf(FILE *fp, const char *fmt, ...) {
+int ga_save_printf(FILE* fp, const char* fmt, ...)
+{
 	int wlen;
 	va_list ap;
 	if(fp == NULL)
@@ -490,27 +490,30 @@ ga_save_printf(FILE *fp, const char *fmt, ...) {
  * @param linesize [in] Pointers to linesize.
  */
 EXPORT
-int
-ga_save_yuv420p(FILE *fp, int w, int h, unsigned char *planes[], int linesize[]) {
+int ga_save_yuv420p(FILE* fp, int w, int h, unsigned char* planes[], int linesize[])
+{
 	int i, j, wlen, written = 0;
-	int w2 = w/2;
-	int h2 = h/2;
+	int w2		 = w / 2;
+	int h2		 = h / 2;
 	int expected = w * h * 3 / 2;
-	unsigned char *src;
+	unsigned char* src;
 	if(fp == NULL || w <= 0 || h <= 0 || planes == NULL || linesize == NULL)
 		return -1;
 	// write Y
 	src = planes[0];
-	for(i = 0; i < h; i++) {
+	for(i = 0; i < h; i++)
+	{
 		if((wlen = fwrite(src, sizeof(char), w, fp)) < 0)
 			goto err_save_yuv;
 		written += wlen;
 		src += linesize[0];
 	}
 	// write U/V
-	for(j = 1; j < 3; j++) {
+	for(j = 1; j < 3; j++)
+	{
 		src = planes[j];
-		for(i = 0; i < h2; i++) {
+		for(i = 0; i < h2; i++)
+		{
 			if((wlen = fwrite(src, sizeof(char), w2, fp)) < 0)
 				goto err_save_yuv;
 			written += wlen;
@@ -518,9 +521,9 @@ ga_save_yuv420p(FILE *fp, int w, int h, unsigned char *planes[], int linesize[])
 		}
 	}
 	//
-	if(written != expected) {
-		ga_error("save YUV (%dx%d): expected %d, save %d (frame may be corrupted)\n",
-			w, h, expected, written);
+	if(written != expected)
+	{
+		ga_error("save YUV (%dx%d): expected %d, save %d (frame may be corrupted)\n", w, h, expected, written);
 	}
 	//
 	fflush(fp);
@@ -539,24 +542,25 @@ err_save_yuv:
  * @param linesize [in] linesize, usually \a h * pixel size plus (optional) alignments.
  */
 EXPORT
-int
-ga_save_rgb4(FILE *fp, int w, int h, unsigned char *planes, int linesize) {
+int ga_save_rgb4(FILE* fp, int w, int h, unsigned char* planes, int linesize)
+{
 	int i, wlen, written = 0;
-	int w4 = w*4;
+	int w4		 = w * 4;
 	int expected = w * h * 4;
 	if(fp == NULL || w <= 0 || h <= 0 || planes == NULL || linesize < w4)
 		return -1;
 	// write
-	for(i = 0; i < h; i++) {
+	for(i = 0; i < h; i++)
+	{
 		if((wlen = fwrite(planes, sizeof(char), w4, fp)) < 0)
 			goto err_save_rgb4;
 		written += wlen;
 		planes += linesize;
 	}
 	//
-	if(written != expected) {
-		ga_error("save RGB4 (%dx%d): expected %d, save %d (frame may be corrupted)\n",
-			w, h, expected, written);
+	if(written != expected)
+	{
+		ga_error("save RGB4 (%dx%d): expected %d, save %d (frame may be corrupted)\n", w, h, expected, written);
 	}
 	//
 	fflush(fp);
@@ -572,9 +576,10 @@ err_save_rgb4:
  * @return This function currently always returns 0.
  */
 EXPORT
-int
-ga_save_close(FILE *fp) {
-	if(fp != NULL) {
+int ga_save_close(FILE* fp)
+{
+	if(fp != NULL)
+	{
 		fclose(fp);
 	}
 	return 0;
@@ -582,14 +587,14 @@ ga_save_close(FILE *fp) {
 
 //
 
-static map<int,list<int> > aggmap;
+static map<int, list<int>> aggmap;
 
 /**
  * Clear everything in the aggregated output buffer.
  */
 EXPORT
-void
-ga_aggregated_reset() {
+void ga_aggregated_reset()
+{
 	aggmap.clear();
 	return;
 }
@@ -613,32 +618,38 @@ ga_aggregated_reset() {
  * To prevent output from different series collides at the same time.
  */
 EXPORT
-void
-ga_aggregated_print(int key, unsigned int limit, int value) {
-	map<int,list<int> >::iterator mi;
+void ga_aggregated_print(int key, unsigned int limit, int value)
+{
+	map<int, list<int>>::iterator mi;
 	// push data
-	if((mi = aggmap.find(key)) == aggmap.end()) {
+	if((mi = aggmap.find(key)) == aggmap.end())
+	{
 		aggmap[key].push_back(value);
 		return;
-	} else {
+	}
+	else
+	{
 		mi->second.push_back(value);
 	}
 	// output?
-	if(mi->second.size() >= limit) {
+	if(mi->second.size() >= limit)
+	{
 		int pos, left, wlen;
 		char *ptr, buf[16384] = "AGGREGATED-VALUES:";
 		list<int>::iterator li;
 		struct timeval tv;
 		//
-		pos = snprintf(buf, sizeof(buf), "AGGREGATED-OUTPUT[%04x]:", key);
+		pos  = snprintf(buf, sizeof(buf), "AGGREGATED-OUTPUT[%04x]:", key);
 		left = sizeof(buf) - pos;
-		ptr = buf + pos;
-		for(li = mi->second.begin(); li != mi->second.end() && left>16; li++) {
+		ptr  = buf + pos;
+		for(li = mi->second.begin(); li != mi->second.end() && left > 16; li++)
+		{
 			wlen = snprintf(ptr, left, " %d", *li);
 			ptr += wlen;
 			left -= wlen;
 		}
-		if(li != mi->second.end()) {
+		if(li != mi->second.end())
+		{
 			ga_error("insufficeient space for aggregated messages.\n");
 		}
 		mi->second.clear();
@@ -647,8 +658,7 @@ ga_aggregated_print(int key, unsigned int limit, int value) {
 #ifdef ANDROID
 		__android_log_write(ANDROID_LOG_INFO, "ga_log.native", buf);
 #else
-		fprintf(stderr, "# [%d] %ld.%06ld %s\n",
-			getpid(), tv.tv_sec, tv.tv_usec, buf);
+		fprintf(stderr, "# [%d] %ld.%06ld %s\n", getpid(), tv.tv_sec, tv.tv_usec, buf);
 #endif
 		ga_writelog(tv, buf);
 	}
@@ -668,15 +678,20 @@ ga_aggregated_print(int key, unsigned int limit, int value) {
  * the returned pointer plus \a startcode_len.
  */
 EXPORT
-unsigned char *
-ga_find_startcode(unsigned char *buf, unsigned char *end, int *startcode_len) {
-	unsigned char *ptr;
-	for(ptr = buf; ptr < end-4; ptr++) {
-		if(*ptr == 0 && *(ptr+1)==0) {
-			if(*(ptr+2) == 1) {
+unsigned char* ga_find_startcode(unsigned char* buf, unsigned char* end, int* startcode_len)
+{
+	unsigned char* ptr;
+	for(ptr = buf; ptr < end - 4; ptr++)
+	{
+		if(*ptr == 0 && *(ptr + 1) == 0)
+		{
+			if(*(ptr + 2) == 1)
+			{
 				*startcode_len = 3;
 				return ptr;
-			} else if(*(ptr+2)==0 && *(ptr+3)==1) {
+			}
+			else if(*(ptr + 2) == 0 && *(ptr + 3) == 1)
+			{
 				*startcode_len = 4;
 				return ptr;
 			}
@@ -692,8 +707,8 @@ ga_find_startcode(unsigned char *buf, unsigned char *end, int *startcode_len) {
  * @return The converted number in long format.
  */
 EXPORT
-long
-ga_atoi(const char *str) {
+long ga_atoi(const char* str)
+{
 	// XXX: not sure why sometimes windows strtol failed on
 	// handling read-only constant strings ...
 	char buf[64];
@@ -704,27 +719,34 @@ ga_atoi(const char *str) {
 }
 
 EXPORT
-struct gaRect *
-ga_fillrect(struct gaRect *rect, int left, int top, int right, int bottom) {
+struct gaRect* ga_fillrect(struct gaRect* rect, int left, int top, int right, int bottom)
+{
 	if(rect == NULL)
 		return NULL;
-#define SWAP(a,b)	do { int tmp = a; a = b; b = tmp; } while(0);
+#define SWAP(a, b)   \
+	do                \
+	{                 \
+		int tmp = a;   \
+		a		  = b;   \
+		b		  = tmp; \
+	} while(0);
 	if(left > right)
 		SWAP(left, right);
 	if(top > bottom)
 		SWAP(top, bottom);
-#undef	SWAP
-	rect->left = left;
-	rect->top = top;
-	rect->right = right;
+#undef SWAP
+	rect->left	 = left;
+	rect->top	 = top;
+	rect->right	 = right;
 	rect->bottom = bottom;
 	//
-	rect->width = rect->right - rect->left + 1;
-	rect->height = rect->bottom - rect->top + 1;
+	rect->width		= rect->right - rect->left + 1;
+	rect->height	= rect->bottom - rect->top + 1;
 	rect->linesize = rect->width * RGBA_SIZE;
-	rect->size = rect->width * rect->height * RGBA_SIZE;
+	rect->size		= rect->width * rect->height * RGBA_SIZE;
 	//
-	if(rect->width <= 0 || rect->height <= 0) {
+	if(rect->width <= 0 || rect->height <= 0)
+	{
 		ga_error("# invalid rect size (%dx%d)\n", rect->width, rect->height);
 		return NULL;
 	}
@@ -734,11 +756,11 @@ ga_fillrect(struct gaRect *rect, int left, int top, int right, int bottom) {
 
 #ifdef WIN32
 EXPORT
-int
-ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
+int ga_crop_window(struct gaRect* rect, struct gaRect** prect)
+{
 	char wndname[1024], wndclass[1024];
-	char *pname;
-	char *pclass;
+	char* pname;
+	char* pclass;
 	int dw, dh, find_wnd_arg = 0;
 	HWND hWnd;
 	RECT client;
@@ -747,22 +769,22 @@ ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
 	if(rect == NULL || prect == NULL)
 		return -1;
 	//
-	pname = ga_conf_readv("find-window-name", wndname, sizeof(wndname));
+	pname	 = ga_conf_readv("find-window-name", wndname, sizeof(wndname));
 	pclass = ga_conf_readv("find-window-class", wndclass, sizeof(wndclass));
 	//
 	if(pname != NULL && *pname != '\0')
 		find_wnd_arg++;
 	if(pclass != NULL && *pclass != '\0')
 		find_wnd_arg++;
-	if(find_wnd_arg <= 0) {
+	if(find_wnd_arg <= 0)
+	{
 		*prect = NULL;
 		return 0;
 	}
 	//
-	if((hWnd = FindWindow(pclass, pname)) == NULL) {
-		ga_error("FindWindow failed for '%s/%s'\n",
-			pclass ? pclass : "",
-			pname ? pname : "");
+	if((hWnd = FindWindow(pclass, pname)) == NULL)
+	{
+		ga_error("FindWindow failed for '%s/%s'\n", pclass ? pclass : "", pname ? pname : "");
 		return -1;
 	}
 	//
@@ -770,38 +792,42 @@ ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
 	dw = GetSystemMetrics(SM_CXSCREEN);
 	dh = GetSystemMetrics(SM_CYSCREEN);
 	//
-	ga_error("Found window (0x%08x) :%s%s%s%s\n", hWnd,
-		pclass ? " class=" : "",
-		pclass ? pclass : "",
-		pname ? " name=" : "",
-		pname ? pname : "");
+	ga_error("Found window (0x%08x) :%s%s%s%s\n",
+				hWnd,
+				pclass ? " class=" : "",
+				pclass ? pclass : "",
+				pname ? " name=" : "",
+				pname ? pname : "");
 	//
-	if(SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW) == 0) {
+	if(SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW) == 0)
+	{
 		ga_error("SetWindowPos failed.\n");
 		return -1;
 	}
-	if(GetClientRect(hWnd, &client) == 0) {
+	if(GetClientRect(hWnd, &client) == 0)
+	{
 		ga_error("GetClientRect failed.\n");
 		return -1;
 	}
-	if(SetForegroundWindow(hWnd) == 0) {
+	if(SetForegroundWindow(hWnd) == 0)
+	{
 		ga_error("SetForegroundWindow failed.\n");
 	}
 	//
 	lt.x = client.left;
 	lt.y = client.top;
-	rb.x = client.right-1;
-	rb.y = client.bottom-1;
+	rb.x = client.right - 1;
+	rb.y = client.bottom - 1;
 	//
-	if(ClientToScreen(hWnd, &lt) == 0
-	|| ClientToScreen(hWnd, &rb) == 0) {
+	if(ClientToScreen(hWnd, &lt) == 0 || ClientToScreen(hWnd, &rb) == 0)
+	{
 		ga_error("Map from client coordinate to screen coordinate failed.\n");
 		return -1;
 	}
 	//
-	rect->left = lt.x;
-	rect->top = lt.y;
-	rect->right = rb.x;
+	rect->left	 = lt.x;
+	rect->top	 = lt.y;
+	rect->right	 = rb.x;
 	rect->bottom = rb.y;
 	// size check: multiples of 2?
 	if((rect->right - rect->left + 1) % 2 != 0)
@@ -809,11 +835,15 @@ ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
 	if((rect->bottom - rect->top + 1) % 2 != 0)
 		rect->top--;
 	//
-	if(rect->left < 0 || rect->top < 0 || rect->right >= dw || rect->bottom >= dh) {
+	if(rect->left < 0 || rect->top < 0 || rect->right >= dw || rect->bottom >= dh)
+	{
 		ga_error("Invalid window: (%d,%d)-(%d,%d) w=%d h=%d (screen dimension = %dx%d).\n",
-			rect->left, rect->top, rect->right, rect->bottom,
-			rect->right - rect->left + 1,
-			rect->bottom - rect->top + 1);
+					rect->left,
+					rect->top,
+					rect->right,
+					rect->bottom,
+					rect->right - rect->left + 1,
+					rect->bottom - rect->top + 1);
 		return -1;
 	}
 	//
@@ -821,42 +851,45 @@ ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
 	return 1;
 }
 #elif defined(__APPLE__) || defined(ANDROID)
-int
-ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
+int ga_crop_window(struct gaRect* rect, struct gaRect** prect)
+{
 	// XXX: implement find window for Apple
 	*prect = NULL;
 	return 0;
 }
 #else /* X11 */
-Window
-FindWindowX(Display *dpy, Window top, const char *name) {
+Window FindWindowX(Display* dpy, Window top, const char* name)
+{
 	Window *children, dummy;
 	unsigned int i, nchildren;
 	Window w = 0;
-	char *window_name;
+	char* window_name;
 
-	if(XFetchName(dpy, top, &window_name) && !strcmp(window_name, name)) {
-		return(top);
+	if(XFetchName(dpy, top, &window_name) && !strcmp(window_name, name))
+	{
+		return (top);
 	}
 
 	if(!XQueryTree(dpy, top, &dummy, &dummy, &children, &nchildren))
-		return(0);
+		return (0);
 
-	for(i = 0; i < nchildren; i++) {
+	for(i = 0; i < nchildren; i++)
+	{
 		w = FindWindowX(dpy, children[i], name);
-		if (w) {
+		if(w)
+		{
 			break;
 		}
 	}
 
-	if (children)
-		XFree ((char *)children);
+	if(children)
+		XFree((char*)children);
 
-	return(w);
+	return (w);
 }
 
-int
-GetClientRectX(Display *dpy, int screen, Window window, struct gaRect *rect) {
+int GetClientRectX(Display* dpy, int screen, Window window, struct gaRect* rect)
+{
 	XWindowAttributes win_attributes;
 	int rx, ry;
 	Window tmpwin;
@@ -865,10 +898,8 @@ GetClientRectX(Display *dpy, int screen, Window window, struct gaRect *rect) {
 		return -1;
 	if(!XGetWindowAttributes(dpy, window, &win_attributes))
 		return -1;
-	XTranslateCoordinates(dpy, window, win_attributes.root,
-		-win_attributes.border_width,
-		-win_attributes.border_width,
-		&rx, &ry, &tmpwin);
+	XTranslateCoordinates(
+	  dpy, window, win_attributes.root, -win_attributes.border_width, -win_attributes.border_width, &rx, &ry, &tmpwin);
 	rect->left = rx;
 	rect->top = ry;
 	rect->right = rx + win_attributes.width - 1;
@@ -876,39 +907,44 @@ GetClientRectX(Display *dpy, int screen, Window window, struct gaRect *rect) {
 	return 0;
 }
 
-int
-ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
+int ga_crop_window(struct gaRect* rect, struct gaRect** prect)
+{
 	char display[16], wndname[1024];
 	char *pdisplay, *pname;
-	Display *d = NULL;
+	Display* d = NULL;
 	int dw, dh, screen = 0;
 	Window w = 0;
 	//
 	if(rect == NULL || prect == NULL)
 		return -1;
 	//
-	if((pdisplay = ga_conf_readv("display", display, sizeof(display))) == NULL) {
+	if((pdisplay = ga_conf_readv("display", display, sizeof(display))) == NULL)
+	{
 		*prect = NULL;
 		return 0;
 	}
-	if((pname = ga_conf_readv("find-window-name", wndname, sizeof(wndname))) == NULL) {
+	if((pname = ga_conf_readv("find-window-name", wndname, sizeof(wndname))) == NULL)
+	{
 		*prect = NULL;
 		return 0;
 	}
 	//
-	if((d = XOpenDisplay(pdisplay)) == NULL) {
+	if((d = XOpenDisplay(pdisplay)) == NULL)
+	{
 		ga_error("ga_crop_window: cannot open display %s\n", display);
 		return -1;
 	}
 	screen = XDefaultScreen(d);
 	dw = DisplayWidth(d, screen);
 	dh = DisplayHeight(d, screen);
-	if((w = FindWindowX(d, RootWindow(d, screen), pname)) == 0) {
+	if((w = FindWindowX(d, RootWindow(d, screen), pname)) == 0)
+	{
 		ga_error("FindWindowX failed for %s/%s\n", pdisplay, pname);
 		XCloseDisplay(d);
 		return -1;
 	}
-	if(GetClientRectX(d, screen, w, rect) < 0) {
+	if(GetClientRectX(d, screen, w, rect) < 0)
+	{
 		ga_error("GetClientRectX failed for %s/%s\n", pdisplay, pname);
 		XCloseDisplay(d);
 		return -1;
@@ -922,12 +958,17 @@ ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
 	if((rect->bottom - rect->top + 1) % 2 != 0)
 		rect->top--;
 	// window is all visible?
-	if(rect->left < 0 || rect->top < 0 || rect->right >= dw || rect->bottom >= dh) {
+	if(rect->left < 0 || rect->top < 0 || rect->right >= dw || rect->bottom >= dh)
+	{
 		ga_error("Invalid window: (%d,%d)-(%d,%d) w=%d h=%d (screen dimension = %dx%d).\n",
-			rect->left, rect->top, rect->right, rect->bottom,
-			rect->right - rect->left + 1,
-			rect->bottom - rect->top + 1,
-			dw, dh);
+					rect->left,
+					rect->top,
+					rect->right,
+					rect->bottom,
+					rect->right - rect->left + 1,
+					rect->bottom - rect->top + 1,
+					dw,
+					dh);
 		return -1;
 	}
 	//
@@ -941,31 +982,32 @@ ga_crop_window(struct gaRect *rect, struct gaRect **prect) {
  * This function is only for debug purpose.
  */
 EXPORT
-void
-ga_backtrace() {
+void ga_backtrace()
+{
 #if defined(WIN32) || defined(ANDROID)
 	return;
 #else
 	int j, nptrs;
 #define SIZE 100
-	void *buffer[SIZE];
-	char **strings;
+	void* buffer[SIZE];
+	char** strings;
 
 	nptrs = backtrace(buffer, SIZE);
 	printf("-- backtrace() returned %d addresses -----------\n", nptrs);
 
 	strings = backtrace_symbols(buffer, nptrs);
-	if (strings == NULL) {
+	if(strings == NULL)
+	{
 		perror("backtrace_symbols");
 		exit(-1);
 	}
 
-	for (j = 0; j < nptrs; j++)
+	for(j = 0; j < nptrs; j++)
 		printf("%s\n", strings[j]);
 
 	free(strings);
 	printf("------------------------------------------------\n");
-#endif	/* WIN32 */
+#endif /* WIN32 */
 }
 
 /**
@@ -975,11 +1017,11 @@ ga_backtrace() {
  * Put those function here to prevent them from being optimized out.
  */
 EXPORT
-void
-ga_dummyfunc() {
+void ga_dummyfunc()
+{
 #ifndef ANDROID_NO_FFMPEG
 	// place some required functions - for link purpose
-	swr_alloc_set_opts(NULL, 0, (AVSampleFormat) 0, 0, 0, (AVSampleFormat) 0, 0, 0, NULL);
+	swr_alloc_set_opts(NULL, 0, (AVSampleFormat)0, 0, 0, (AVSampleFormat)0, 0, 0, NULL);
 #endif
 	return;
 }
@@ -988,32 +1030,34 @@ ga_dummyfunc() {
  * Data struture to describe codecs supported by GA.
  * The last data must have a key of NULL.
  */
-struct ga_codec_entry {
-	const char *key;	/**< Key to identify the codec, must be unique */
-	enum AVCodecID id;	/**< codec Id: defined in (ffmpeg) AVCodecID */
-	const char *mime;	/**< MIME-type name */
-	const char *ffmpeg_decoders[4]; /**< The ffmpeg decoder name */
+struct ga_codec_entry
+{
+	const char* key;					  /**< Key to identify the codec, must be unique */
+	enum AVCodecID id;				  /**< codec Id: defined in (ffmpeg) AVCodecID */
+	const char* mime;					  /**< MIME-type name */
+	const char* ffmpeg_decoders[4]; /**< The ffmpeg decoder name */
 };
 
 /**
  * The codec table.
  */
 struct ga_codec_entry ga_codec_table[] = {
-	{ "H264", AV_CODEC_ID_H264, "video/avc", { "h264", NULL } },
-	{ "H265", AV_CODEC_ID_H265, "video/hevc", { "hevc", NULL } },
-	{ "VP8", AV_CODEC_ID_VP8, "video/x-vnd.on2.vp8", { "libvpx", NULL } },
-	{ "MPA", AV_CODEC_ID_MP3, "audio/mpeg", { "mp3", NULL } },
-	{ "OPUS", AV_CODEC_ID_OPUS, "audio/opus", { "libopus", NULL } },
-	{ NULL, AV_CODEC_ID_NONE, NULL, { NULL } } /* END */
+  {"H264", AV_CODEC_ID_H264, "video/avc", {"h264", NULL}},
+  {"H265", AV_CODEC_ID_H265, "video/hevc", {"hevc", NULL}},
+  {"VP8", AV_CODEC_ID_VP8, "video/x-vnd.on2.vp8", {"libvpx", NULL}},
+  {"MPA", AV_CODEC_ID_MP3, "audio/mpeg", {"mp3", NULL}},
+  {"OPUS", AV_CODEC_ID_OPUS, "audio/opus", {"libopus", NULL}},
+  {NULL, AV_CODEC_ID_NONE, NULL, {NULL}} /* END */
 };
 
 /**
  * Get the codec entry from the codec table by key.
  */
-static ga_codec_entry *
-ga_lookup_core(const char *key) {
+static ga_codec_entry* ga_lookup_core(const char* key)
+{
 	int i = 0;
-	while(i >= 0 && ga_codec_table[i].key != NULL) {
+	while(i >= 0 && ga_codec_table[i].key != NULL)
+	{
 		if(strcasecmp(ga_codec_table[i].key, key) == 0)
 			return &ga_codec_table[i];
 		i++;
@@ -1025,10 +1069,11 @@ ga_lookup_core(const char *key) {
  * Get the codec MIME-type from the codec table by key.
  */
 EXPORT
-const char *
-ga_lookup_mime(const char *key) {
-	struct ga_codec_entry * e = ga_lookup_core(key);
-	if(e==NULL || e->mime==NULL) {
+const char* ga_lookup_mime(const char* key)
+{
+	struct ga_codec_entry* e = ga_lookup_core(key);
+	if(e == NULL || e->mime == NULL)
+	{
 		ga_error("ga_lookup[%s]: mime not found\n", key);
 		return NULL;
 	}
@@ -1039,10 +1084,11 @@ ga_lookup_mime(const char *key) {
  * Get the codec ffmpeg decoders from the codec table by key.
  */
 EXPORT
-const char **
-ga_lookup_ffmpeg_decoders(const char *key) {
-	struct ga_codec_entry * e = ga_lookup_core(key);
-	if(e==NULL || e->ffmpeg_decoders==NULL) {
+const char** ga_lookup_ffmpeg_decoders(const char* key)
+{
+	struct ga_codec_entry* e = ga_lookup_core(key);
+	if(e == NULL || e->ffmpeg_decoders == NULL)
+	{
 		ga_error("ga_lookup[%s]: ffmpeg decoders not found\n", key);
 		return NULL;
 	}
@@ -1053,10 +1099,11 @@ ga_lookup_ffmpeg_decoders(const char *key) {
  * Get the codec Id from the codec table by key.
  */
 EXPORT
-enum AVCodecID
-ga_lookup_codec_id(const char *key) {
-	struct ga_codec_entry * e = ga_lookup_core(key);
-	if(e==NULL) {
+enum AVCodecID ga_lookup_codec_id(const char* key)
+{
+	struct ga_codec_entry* e = ga_lookup_core(key);
+	if(e == NULL)
+	{
 		ga_error("ga_lookup[%s]: codec id not found\n", key);
 		return AV_CODEC_ID_NONE;
 	}
@@ -1067,9 +1114,10 @@ ga_lookup_codec_id(const char *key) {
 /**
  * Built-in signal handler for emulating pthread_cancel.
  */
-static void
-pthread_cancel_handler(int s) {
-	if(s == SIGUSR2) {
+static void pthread_cancel_handler(int s)
+{
+	if(s == SIGUSR2)
+	{
 		pthread_exit(NULL);
 	}
 	return;
@@ -1090,8 +1138,8 @@ pthread_cancel_handler(int s) {
  * This function registers a handler for SIGUSR2.
  */
 EXPORT
-void
-pthread_cancel_init() {
+void pthread_cancel_init()
+{
 #ifdef ANDROID
 	signal(SIGUSR2, pthread_cancel_handler);
 #endif
@@ -1109,9 +1157,5 @@ pthread_cancel_init() {
  * or not.
  */
 EXPORT
-int
-pthread_cancel(pthread_t thread) {
-	return pthread_kill(thread, SIGUSR2);
-}
+int pthread_cancel(pthread_t thread) { return pthread_kill(thread, SIGUSR2); }
 #endif
-

@@ -25,20 +25,21 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-typedef int	(*t_SDL2_OpenAudio)(SDL_AudioSpec *, SDL_AudioSpec *);
-typedef void	(*t_SDL2_PauseAudio)(int);
-typedef void	(*t_SDL2_CloseAudio)();
+	typedef int (*t_SDL2_OpenAudio)(SDL_AudioSpec*, SDL_AudioSpec*);
+	typedef void (*t_SDL2_PauseAudio)(int);
+	typedef void (*t_SDL2_CloseAudio)();
 #ifdef __cplusplus
 }
 #endif
 
-extern t_SDL2_OpenAudio		old_SDL2_OpenAudio;
-extern t_SDL2_PauseAudio	old_SDL2_PauseAudio;
-extern t_SDL2_CloseAudio	old_SDL2_CloseAudio;
+extern t_SDL2_OpenAudio old_SDL2_OpenAudio;
+extern t_SDL2_PauseAudio old_SDL2_PauseAudio;
+extern t_SDL2_CloseAudio old_SDL2_CloseAudio;
 
-int hook_SDL2_OpenAudio(SDL_AudioSpec *desired, SDL_AudioSpec *obtained);
+int hook_SDL2_OpenAudio(SDL_AudioSpec* desired, SDL_AudioSpec* obtained);
 void hook_SDL2_PauseAudio(int pause_on);
 void hook_SDL2_CloseAudio();
 

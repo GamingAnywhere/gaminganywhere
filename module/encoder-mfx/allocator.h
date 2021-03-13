@@ -21,24 +21,24 @@
 
 #include <mfxvideo.h>
 
-#define MFX_ALIGN16(x)	((((x) + 15) >> 4) << 4)
-#define MFX_ALIGN32(x)	((((x) + 31) >> 5) << 5)
+#define MFX_ALIGN16(x) ((((x) + 15) >> 4) << 4)
+#define MFX_ALIGN32(x) ((((x) + 31) >> 5) << 5)
 
-mfxStatus ba_alloc(mfxHDL pthis, mfxU32 nbytes, mfxU16 type, mfxMemId *mid);
-mfxStatus ba_lock(mfxHDL pthis, mfxMemId mid, mfxU8 **ptr);
+mfxStatus ba_alloc(mfxHDL pthis, mfxU32 nbytes, mfxU16 type, mfxMemId* mid);
+mfxStatus ba_lock(mfxHDL pthis, mfxMemId mid, mfxU8** ptr);
 mfxStatus ba_unlock(mfxHDL pthis, mfxMemId mid);
 mfxStatus ba_free(mfxHDL pthis, mfxMemId mid);
 mfxStatus ba_register(mfxSession s);
 
-mfxStatus fa_alloc(mfxHDL pthis, mfxFrameAllocRequest *request, mfxFrameAllocResponse *response);
-mfxStatus fa_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr);
-mfxStatus fa_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData *ptr);
-mfxStatus fa_gethdl(mfxHDL pthis, mfxMemId mid, mfxHDL *handle);
-mfxStatus fa_free(mfxHDL pthis, mfxFrameAllocResponse *response);
+mfxStatus fa_alloc(mfxHDL pthis, mfxFrameAllocRequest* request, mfxFrameAllocResponse* response);
+mfxStatus fa_lock(mfxHDL pthis, mfxMemId mid, mfxFrameData* ptr);
+mfxStatus fa_unlock(mfxHDL pthis, mfxMemId mid, mfxFrameData* ptr);
+mfxStatus fa_gethdl(mfxHDL pthis, mfxMemId mid, mfxHDL* handle);
+mfxStatus fa_free(mfxHDL pthis, mfxFrameAllocResponse* response);
 mfxStatus fa_register(mfxSession s);
 
-mfxFrameSurface1 * frame_pool_alloc(mfxFrameInfo *info, mfxFrameAllocResponse *response);
-void frame_pool_free(mfxFrameSurface1 *pool);
-mfxFrameSurface1 * frame_pool_get(mfxFrameSurface1 *pool, mfxFrameAllocResponse *response);
+mfxFrameSurface1* frame_pool_alloc(mfxFrameInfo* info, mfxFrameAllocResponse* response);
+void frame_pool_free(mfxFrameSurface1* pool);
+mfxFrameSurface1* frame_pool_get(mfxFrameSurface1* pool, mfxFrameAllocResponse* response);
 
 #endif /* __ALLOCATOR_H__ */

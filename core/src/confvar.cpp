@@ -28,30 +28,25 @@ using namespace std;
 /**
  * Reset everything.
  */
-void
-gaConfVar::clear() {
+void gaConfVar::clear()
+{
 	this->data = "";
 	this->mapdata.clear();
 	this->mi = this->mapdata.begin();
 }
 
-gaConfVar::gaConfVar() {
-	this->clear();
-}
+gaConfVar::gaConfVar() { this->clear(); }
 
 /**
  * Get the stored value.
  */
-string
-gaConfVar::value() {
-	return this->data;
-}
+string gaConfVar::value() { return this->data; }
 
 /**
  * Implement the = operator for assign plain-text value.
  */
-gaConfVar&
-gaConfVar::operator=(const char *value) {
+gaConfVar& gaConfVar::operator=(const char* value)
+{
 	this->data = value;
 	this->mapdata.clear();
 	this->mi = this->mapdata.begin();
@@ -61,8 +56,8 @@ gaConfVar::operator=(const char *value) {
 /**
  * Implement the = operator for assign plain-text value.
  */
-gaConfVar&
-gaConfVar::operator=(const string value) {
+gaConfVar& gaConfVar::operator=(const string value)
+{
 	this->data = value;
 	this->mapdata.clear();
 	this->mi = this->mapdata.begin();
@@ -72,29 +67,23 @@ gaConfVar::operator=(const string value) {
 /**
  * Implement the = operator for assign from another \em gaConfVar class.
  */
-gaConfVar&
-gaConfVar::operator=(const gaConfVar var) {
-	this->data = var.data;
+gaConfVar& gaConfVar::operator=(const gaConfVar var)
+{
+	this->data	  = var.data;
 	this->mapdata = var.mapdata;
-	this->mi = this->mapdata.begin();
+	this->mi		  = this->mapdata.begin();
 	return *this;
 }
 
 /**
  * Implement the [] operator for reading from parameter map.
  */
-string&
-gaConfVar::operator[](const char *key) {
-	return mapdata[key];
-}
+string& gaConfVar::operator[](const char* key) { return mapdata[key]; }
 
 /**
  * Implement the [] operator for reading from parameter map.
  */
-string&
-gaConfVar::operator[](const string key) {
-	return mapdata[key];
-}
+string& gaConfVar::operator[](const string key) { return mapdata[key]; }
 
 /**
  * Determine if the parameter map contains a given key.
@@ -102,26 +91,20 @@ gaConfVar::operator[](const string key) {
  * @param key [in] The key to be tested.
  * @return true on success, or false on error.
  */
-bool
-gaConfVar::haskey(const char *key) {
-	return (mapdata.find(key) != mapdata.end());
-}
+bool gaConfVar::haskey(const char* key) { return (mapdata.find(key) != mapdata.end()); }
 
 /**
  * Return the number of key/value pairs stored in the parameter map.
  *
  * @return The number of stored key/value pairs.
  */
-int
-gaConfVar::msize() {
-	return this->mapdata.size();
-}
+int gaConfVar::msize() { return this->mapdata.size(); }
 
 /**
  * Reset the iteration counter for the parameter map.
  */
-void
-gaConfVar::mreset() {
+void gaConfVar::mreset()
+{
 	this->mi = this->mapdata.begin();
 	return;
 }
@@ -131,8 +114,8 @@ gaConfVar::mreset() {
  *
  * @return A non-empty key string, or an empty string if it reaches the end.
  */
-string
-gaConfVar::mkey() {
+string gaConfVar::mkey()
+{
 	if(this->mi == this->mapdata.end())
 		return "";
 	return mi->first;
@@ -143,8 +126,8 @@ gaConfVar::mkey() {
  *
  * @return A non-empty value string, or an empty string if it reaches the end.
  */
-string
-gaConfVar::mvalue() {
+string gaConfVar::mvalue()
+{
 	if(this->mi == this->mapdata.end())
 		return "";
 	return mi->second;
@@ -155,8 +138,8 @@ gaConfVar::mvalue() {
  *
  * @return A non-empty key string, or an empty string if it reaches the end.
  */
-string
-gaConfVar::mnextkey() {
+string gaConfVar::mnextkey()
+{
 	if(this->mi == this->mapdata.end())
 		return "";
 	// move forward
@@ -166,4 +149,3 @@ gaConfVar::mnextkey() {
 		return "";
 	return mi->first;
 }
-

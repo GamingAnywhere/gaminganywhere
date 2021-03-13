@@ -22,23 +22,25 @@
 #include <strings.h>
 #endif
 
-#include <ga/common.hpp>
 #include "minivp8.hpp"
 
-unsigned char *
-parse_descriptor(struct mini_vp8_context *ctx, unsigned char *ptr) {
+#include <ga/common.hpp>
+
+unsigned char* parse_descriptor(struct mini_vp8_context* ctx, unsigned char* ptr)
+{
 	// parse descriptor (1-5 bytes)
-	ctx->extended = (*ptr) & 0x80;
+	ctx->extended		 = (*ptr) & 0x80;
 	ctx->non_reference = (*ptr) & 0x20;
-	ctx->start = (*ptr) & 0x10;
-	ctx->pid = (*ptr) & 0x07;
+	ctx->start			 = (*ptr) & 0x10;
+	ctx->pid				 = (*ptr) & 0x07;
 	ptr++;
 	//
-	if(ctx->extended != 0) {
-		ctx->has_picid = (*ptr) & 0x80;
+	if(ctx->extended != 0)
+	{
+		ctx->has_picid		 = (*ptr) & 0x80;
 		ctx->has_TL0PICIDX = (*ptr) & 0x40;
-		ctx->has_tid = (*ptr) & 0x20;
-		ctx->has_keyidx = (*ptr) & 0x10;
+		ctx->has_tid		 = (*ptr) & 0x20;
+		ctx->has_keyidx	 = (*ptr) & 0x10;
 		ptr++;
 	}
 	if(ctx->has_picid)
@@ -50,48 +52,48 @@ parse_descriptor(struct mini_vp8_context *ctx, unsigned char *ptr) {
 	return ptr;
 }
 
-unsigned char *
-parse_payload_header(struct mini_vp8_context *ctx, unsigned char *ptr) {
+unsigned char* parse_payload_header(struct mini_vp8_context* ctx, unsigned char* ptr)
+{
 	// parse payload header, 3 bytes
 	unsigned int size0, size1, size2;
-	ctx->show_frame = (*ptr) & 0x10;
-	ctx->ver = ((*ptr) & 0x0e)>>1;
-	ctx->is_keyframe = ((*ptr) & 0x01)^0x01;
+	ctx->show_frame  = (*ptr) & 0x10;
+	ctx->ver			  = ((*ptr) & 0x0e) >> 1;
+	ctx->is_keyframe = ((*ptr) & 0x01) ^ 0x01;
 	//
-	size0 = ((*ptr) & 0xe0)>>5;
+	size0 = ((*ptr) & 0xe0) >> 5;
 	ptr++;
 	//
-	size1 = *ptr++;
-	size2 = *ptr++;
-	ctx->size = ((unsigned int) size0) + 8U * size1 + 2048U * size2;
+	size1		 = *ptr++;
+	size2		 = *ptr++;
+	ctx->size = ((unsigned int)size0) + 8U * size1 + 2048U * size2;
 	//
 	return ptr;
 }
 
 // assume: buf contains a single nal
 // return 0 on success, or -1 on fail
-int
-mini_vp8_parse(struct mini_vp8_context *ctx, unsigned char *buf, int len) {
+int mini_vp8_parse(struct mini_vp8_context* ctx, unsigned char* buf, int len)
+{
 	//
-	unsigned char *ptr = buf;
+	unsigned char* ptr = buf;
 	//
 	bzero(ctx, sizeof(struct mini_vp8_context));
 	ptr = parse_descriptor(ctx, buf);
 	ptr = parse_payload_header(ctx, buf);
-	if(ctx->is_keyframe) {
+	if(ctx->is_keyframe)
+	{
 		unsigned char local_key;
 		unsigned char local_ver;
 		unsigned char local_show;
-		local_key = (*ptr) & 0x80;
-		local_ver = ((*ptr) & 0x70)>>4;
+		local_key  = (*ptr) & 0x80;
+		local_ver  = ((*ptr) & 0x70) >> 4;
 		local_show = (*ptr) & 0x08;
 		ptr += 3;
 		// local_key should be 1 as well
-		ctx->width = (*((unsigned short*) ptr)) & 0x3fff;
+		ctx->width = (*((unsigned short*)ptr)) & 0x3fff;
 		ptr += 2;
-		ctx->height= (*((unsigned short*) ptr)) & 0x3fff;
+		ctx->height = (*((unsigned short*)ptr)) & 0x3fff;
 		ptr += 2;
 	}
 	return 0;
 }
-

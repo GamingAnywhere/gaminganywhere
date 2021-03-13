@@ -19,25 +19,28 @@
 #ifndef __GA_VIDEOLIVESOURCE_H__
 #define __GA_VIDEOLIVESOURCE_H__
 
-#include <FramedSource.hh>
 #include "ga-module.h"
 
-class GAVideoLiveSource : public FramedSource {
-public:
-	static GAVideoLiveSource * createNew(UsageEnvironment& env, int cid/* TODO: more params */);
-	//static EventTriggerId eventTriggerId;
-protected:
+#include <FramedSource.hh>
+
+class GAVideoLiveSource : public FramedSource
+{
+  public:
+	static GAVideoLiveSource* createNew(UsageEnvironment& env, int cid /* TODO: more params */);
+	// static EventTriggerId eventTriggerId;
+  protected:
 	GAVideoLiveSource(UsageEnvironment& env, int cid);
 	~GAVideoLiveSource();
-private:
+
+  private:
 	static unsigned referenceCount;
 	static int remove_startcode;
-	static ga_module_t *m;
+	static ga_module_t* m;
 	int channelId;
 	//
 	static void deliverFrame0(void* clientData);
 	void doGetNextFrame();
-	//virtual void doStopGettingFrames(); // optional
+	// virtual void doStopGettingFrames(); // optional
 	void deliverFrame();
 };
 

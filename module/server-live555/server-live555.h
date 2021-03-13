@@ -17,10 +17,9 @@
  */
 
 #ifndef __SERVER_LIVE555_H__
-#define	__SERVER_LIVE555_H__
+#define __SERVER_LIVE555_H__
 
-int live_server_register_client(void *ccontext);
-int live_server_unregister_client(void *ccontext);
+int live_server_register_client(void* ccontext);
+int live_server_unregister_client(void* ccontext);
 
-#endif	/* __SERVER_LIVE555_H__ */
-
+#endif /* __SERVER_LIVE555_H__ */

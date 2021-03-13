@@ -1,1 +1,1 @@
-../../../core/ga-avcodec.h
+../../../ core / ga - avcodec.h

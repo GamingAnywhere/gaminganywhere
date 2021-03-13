@@ -1,1 +1,1 @@
-../../../core/rtspconf.h
+../../../ core / rtspconf.h

@@ -19,31 +19,31 @@
 #ifndef __GA_MEDIASUBSESSION_H__
 #define __GA_MEDIASUBSESSION_H__
 
-#include <stdio.h>
 #include <OnDemandServerMediaSubsession.hh>
+#include <stdio.h>
 
-class GAMediaSubsession : public OnDemandServerMediaSubsession {
-private:
-	const char *mimetype;
+class GAMediaSubsession : public OnDemandServerMediaSubsession
+{
+  private:
+	const char* mimetype;
 	int channelId;
-public:
-	static GAMediaSubsession * createNew(UsageEnvironment &env,
-			int cid, /* channel Id */
-			const char *mimetype = NULL,
-			portNumBits initialPortNum=6970,
-			Boolean multiplexRTCPWithRTP=False);
-protected:
-	GAMediaSubsession(UsageEnvironment &env,
-			int cid, /* channel Id */
-			const char *mimetype = NULL,
-			portNumBits initialPortNum=6970,
-			Boolean multiplexRTCPWithRTP=False);
-	virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-			unsigned& estBitrate);
+
+  public:
+	static GAMediaSubsession* createNew(UsageEnvironment& env,
+													int cid, /* channel Id */
+													const char* mimetype			  = NULL,
+													portNumBits initialPortNum	  = 6970,
+													Boolean multiplexRTCPWithRTP = False);
+
+  protected:
+	GAMediaSubsession(UsageEnvironment& env,
+							int cid, /* channel Id */
+							const char* mimetype			  = NULL,
+							portNumBits initialPortNum	  = 6970,
+							Boolean multiplexRTCPWithRTP = False);
+	virtual FramedSource* createNewStreamSource(unsigned clientSessionId, unsigned& estBitrate);
 	// "estBitrate" is the stream's estimated bitrate, in kbps
-	virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
-			unsigned char rtpPayloadTypeIfDynamic,
-			FramedSource* inputSource);
+	virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock, unsigned char rtpPayloadTypeIfDynamic, FramedSource* inputSource);
 };
 
 #endif /* __GA_MEDIASUBSESSION_H__ */

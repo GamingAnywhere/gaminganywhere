@@ -17,10 +17,9 @@
  */
 
 #ifndef __SERVER_FFMPEG_H__
-#define	__SERVER_FFMPEG_H__
+#define __SERVER_FFMPEG_H__
 
-int ff_server_register_client(void *ccontext);
-int ff_server_unregister_client(void *ccontext);
+int ff_server_register_client(void* ccontext);
+int ff_server_unregister_client(void* ccontext);
 
-#endif	/* __SERVER_FFMPEG_H__ */
-
+#endif /* __SERVER_FFMPEG_H__ */

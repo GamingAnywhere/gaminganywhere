@@ -19,12 +19,12 @@
 #ifndef __XCAP_WIN32_GDI_H__
 #define __XCAP_WIN32_GDI_H__
 
-#include "ga-win32.h"
 #include "ga-avcodec.h"
+#include "ga-win32.h"
 
-int ga_win32_GDI_init(struct gaImage *image);
+int ga_win32_GDI_init(struct gaImage* image);
 void ga_win32_GDI_deinit();
-int ga_win32_GDI_capture(char *buf, int buflen, struct gaRect *grect);
-//int ga_win32_GDI_capture_YUV(struct SwsContext *swsctx, char *buf, int buflen, int *lsize);
+int ga_win32_GDI_capture(char* buf, int buflen, struct gaRect* grect);
+// int ga_win32_GDI_capture_YUV(struct SwsContext *swsctx, char *buf, int buflen, int *lsize);
 
 #endif

@@ -22,20 +22,21 @@
 #include "sdl12-audio.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-typedef int	(*t_SDL_OpenAudio)(SDL12_AudioSpec *, SDL12_AudioSpec *);
-typedef void	(*t_SDL_PauseAudio)(int);
-typedef void	(*t_SDL_CloseAudio)();
+	typedef int (*t_SDL_OpenAudio)(SDL12_AudioSpec*, SDL12_AudioSpec*);
+	typedef void (*t_SDL_PauseAudio)(int);
+	typedef void (*t_SDL_CloseAudio)();
 #ifdef __cplusplus
 }
 #endif
 
-extern t_SDL_OpenAudio		old_SDL_OpenAudio;
-extern t_SDL_PauseAudio		old_SDL_PauseAudio;
-extern t_SDL_CloseAudio		old_SDL_CloseAudio;
+extern t_SDL_OpenAudio old_SDL_OpenAudio;
+extern t_SDL_PauseAudio old_SDL_PauseAudio;
+extern t_SDL_CloseAudio old_SDL_CloseAudio;
 
-int hook_SDL_OpenAudio(SDL12_AudioSpec *desired, SDL12_AudioSpec *obtained);
+int hook_SDL_OpenAudio(SDL12_AudioSpec* desired, SDL12_AudioSpec* obtained);
 void hook_SDL_PauseAudio(int pause_on);
 void hook_SDL_CloseAudio();
 

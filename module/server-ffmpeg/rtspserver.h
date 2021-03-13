@@ -19,28 +19,29 @@
 #ifndef __RTSP_SERVER_H__
 #define __RTSP_SERVER_H__
 
-#include <pthread.h>
-
-#include "vsource.h"
-#include "ga-common.h"
 #include "ga-avcodec.h"
+#include "ga-common.h"
 #include "server-ffmpeg.h"
+#include "vsource.h"
+
+#include <pthread.h>
 
 // acquired from ffmpeg source code
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 #include "ffmpeg/rtsp.h"
 #include "ffmpeg/rtspcodes.h"
-int ffio_open_dyn_packet_buf(AVIOContext **, int);
+	int ffio_open_dyn_packet_buf(AVIOContext**, int);
 #ifdef __cplusplus
 }
 #endif
 
-#define	HOLE_PUNCHING		// enable self-implemented hole-punching
+#define HOLE_PUNCHING // enable self-implemented hole-punching
 
-#define	RTSP_CHANNEL_MAX	8	// must be at least VIDEO_SOURCE_CHANNEL_MAX+1
-#define	RTSP_CHANNEL_MAXx2	16	// must be RTSP_CHANNEL_MAX * 2
+#define RTSP_CHANNEL_MAX	8	// must be at least VIDEO_SOURCE_CHANNEL_MAX+1
+#define RTSP_CHANNEL_MAXx2 16 // must be RTSP_CHANNEL_MAX * 2
 
 enum RTSPServerState {
 	SERVER_STATE_IDLE = 0,
@@ -50,7 +51,8 @@ enum RTSPServerState {
 	SERVER_STATE_TEARDOWN
 };
 
-struct RTSPContext {
+struct RTSPContext
+{
 #ifdef WIN32
 	SOCKET fd;
 #else
@@ -69,27 +71,27 @@ struct RTSPContext {
 #endif
 	//// RTSP
 	// internal read buffer
-	char *rbuffer;
+	char* rbuffer;
 	int rbufhead;
 	int rbuftail;
 	int rbufsize;
 	// for creating SDP
-	AVFormatContext *sdp_fmtctx;
-	AVStream *sdp_vstream[VIDEO_SOURCE_CHANNEL_MAX];
-	AVStream *sdp_astream;
-	AVCodecContext *sdp_vencoder[VIDEO_SOURCE_CHANNEL_MAX];
-	AVCodecContext *sdp_aencoder;
+	AVFormatContext* sdp_fmtctx;
+	AVStream* sdp_vstream[VIDEO_SOURCE_CHANNEL_MAX];
+	AVStream* sdp_astream;
+	AVCodecContext* sdp_vencoder[VIDEO_SOURCE_CHANNEL_MAX];
+	AVCodecContext* sdp_aencoder;
 	// for real audio/video encoding
 	int seq;
-	char *session_id;
+	char* session_id;
 	enum RTSPLowerTransport lower_transport[RTSP_CHANNEL_MAX];
-	AVFormatContext *fmtctx[RTSP_CHANNEL_MAX];
-	AVStream *stream[RTSP_CHANNEL_MAX];
-	AVCodecContext *encoder[RTSP_CHANNEL_MAX];
+	AVFormatContext* fmtctx[RTSP_CHANNEL_MAX];
+	AVStream* stream[RTSP_CHANNEL_MAX];
+	AVCodecContext* encoder[RTSP_CHANNEL_MAX];
 	// streaming
 	int mtu;
-	URLContext *rtp[RTSP_CHANNEL_MAX];	// RTP over UDP
-	pthread_mutex_t rtsp_writer_mutex;	// RTP over RTSP/TCP
+	URLContext* rtp[RTSP_CHANNEL_MAX]; // RTP over UDP
+	pthread_mutex_t rtsp_writer_mutex; // RTP over RTSP/TCP
 #ifdef HOLE_PUNCHING
 	int streamCount;
 #ifdef WIN32
@@ -103,12 +105,12 @@ struct RTSPContext {
 #endif
 };
 
-void rtsp_cleanup(RTSPContext *rtsp, int retcode);
-int rtsp_write_bindata(RTSPContext *ctx, int streamid, uint8_t *buf, int buflen);
-void* rtspserver(void *arg);
+void rtsp_cleanup(RTSPContext* rtsp, int retcode);
+int rtsp_write_bindata(RTSPContext* ctx, int streamid, uint8_t* buf, int buflen);
+void* rtspserver(void* arg);
 #ifdef HOLE_PUNCHING
-int rtp_open_ports(RTSPContext *ctx, int streamid);
-int rtp_write_bindata(RTSPContext *ctx, int streamid, uint8_t *buf, int buflen);
+int rtp_open_ports(RTSPContext* ctx, int streamid);
+int rtp_write_bindata(RTSPContext* ctx, int streamid, uint8_t* buf, int buflen);
 #endif
 
 #endif

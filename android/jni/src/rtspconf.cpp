@@ -1,1 +1,1 @@
-../../../core/rtspconf.cpp
+../../../ core / rtspconf.cpp

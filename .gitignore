@@ -35,4 +35,4 @@
 *.manifest
 
 .ide*
-build
+build*

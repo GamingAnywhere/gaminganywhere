@@ -16,42 +16,41 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdio.h>
 #include <pthread.h>
+#include <stdio.h>
 #ifndef WIN32
-#include <unistd.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
-#include <sys/syscall.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#include <sys/wait.h>
+#include <sys/syscall.h>
 #include <sys/time.h>
-#include <arpa/inet.h>
-#endif	/* ! WIN32 */
+#include <sys/wait.h>
+#include <unistd.h>
+#endif /* ! WIN32 */
 
+#include "encoder-common.h"
 #include "ga-common.h"
 #include "ga-module.h"
-#include "encoder-common.h"
 #include "rtspconf.h"
-
-#include "server-ffmpeg.h"
 #include "rtspserver.h"
+#include "server-ffmpeg.h"
 
 #include <map>
 using namespace std;
 
 #ifdef WIN32
-static SOCKET server_socket = INVALID_SOCKET;	/**< The server socket */
+static SOCKET server_socket = INVALID_SOCKET; /**< The server socket */
 #else
-static int server_socket = -1;			/**< The server socket */
+static int server_socket = -1; /**< The server socket */
 #endif
 static pthread_t server_tid;
-static int server_started = 0;
+static int server_started		 = 0;
 static pthread_rwlock_t cclock = PTHREAD_RWLOCK_INITIALIZER;
-static map<void *, void *> client_context;
+static map<void*, void*> client_context;
 
-int
-ff_server_register_client(void *ccontext) {
+int ff_server_register_client(void* ccontext)
+{
 	if(encoder_register_client(ccontext) < 0)
 		return -1;
 	//
@@ -61,8 +60,8 @@ ff_server_register_client(void *ccontext) {
 	return 0;
 }
 
-int
-ff_server_unregister_client(void *ccontext) {
+int ff_server_unregister_client(void* ccontext)
+{
 	if(encoder_unregister_client(ccontext) < 0)
 		return -1;
 	//
@@ -72,8 +71,8 @@ ff_server_unregister_client(void *ccontext) {
 	return 0;
 }
 
-static void *
-ff_server_main(void *arg) {
+static void* ff_server_main(void* arg)
+{
 #ifdef WIN32
 	SOCKET cs;
 	int csinlen;
@@ -85,27 +84,34 @@ ff_server_main(void *arg) {
 	//
 	server_started = 1;
 	//
-	do {
+	do
+	{
 		pthread_t thread;
 		//
 		csinlen = sizeof(csin);
 		bzero(&csin, sizeof(csin));
-		if((cs = accept(server_socket, (struct sockaddr*) &csin, &csinlen)) < 0) {
+		if((cs = accept(server_socket, (struct sockaddr*)&csin, &csinlen)) < 0)
+		{
 			perror("accept");
-			return (void *) -1;
+			return (void*)-1;
 		}
 		// tunning sending window
-		do {
-			int sndwnd = 8388608;	// 8MB
-			if(setsockopt(cs, SOL_SOCKET, SO_SNDBUF, &sndwnd, sizeof(sndwnd)) == 0) {
+		do
+		{
+			int sndwnd = 8388608; // 8MB
+			if(setsockopt(cs, SOL_SOCKET, SO_SNDBUF, &sndwnd, sizeof(sndwnd)) == 0)
+			{
 				ga_error("ffmpeg-server: set TCP sending buffer success.\n");
-			} else {
+			}
+			else
+			{
 				ga_error("ffmpeg-server: set TCP sending buffer failed.\n");
 			}
 		} while(0);
 		//
 		pthread_cancel_init();
-		if(pthread_create(&thread, NULL, rtspserver, &cs) != 0) {
+		if(pthread_create(&thread, NULL, rtspserver, &cs) != 0)
+		{
 			close(cs);
 			ga_error("ffmpeg-server: cannot create service thread.\n");
 			continue;
@@ -113,23 +119,25 @@ ff_server_main(void *arg) {
 		pthread_detach(thread);
 	} while(server_started);
 	//
-	return (void *) 0;
+	return (void*)0;
 }
 
-static int
-ff_server_init(void *arg) {
+static int ff_server_init(void* arg)
+{
 	struct sockaddr_in sin;
-	struct RTSPConf *conf = rtspconf_global();
+	struct RTSPConf* conf = rtspconf_global();
 	//
-	if((server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+	if((server_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+	{
 		perror("socket");
 		return -1;
 	}
 	//
-	do {
+	do
+	{
 #ifdef WIN32
 		BOOL val = 1;
-		setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*) &val, sizeof(val));
+		setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&val, sizeof(val));
 #else
 		int val = 1;
 		setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
@@ -138,31 +146,34 @@ ff_server_init(void *arg) {
 	//
 	bzero(&sin, sizeof(sin));
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(conf->serverport);
+	sin.sin_port	= htons(conf->serverport);
 	//
-	if(bind(server_socket, (struct sockaddr*) &sin, sizeof(sin)) < 0) {
+	if(bind(server_socket, (struct sockaddr*)&sin, sizeof(sin)) < 0)
+	{
 		perror("bind");
 		return -1;
 	}
-	if(listen(server_socket, 256) < 0) {
+	if(listen(server_socket, 256) < 0)
+	{
 		perror("listen");
 		return -1;
 	}
 	return 0;
 }
 
-static int
-ff_server_start(void *arg) {
-	if(pthread_create(&server_tid, NULL, ff_server_main, NULL) != 0) {
+static int ff_server_start(void* arg)
+{
+	if(pthread_create(&server_tid, NULL, ff_server_main, NULL) != 0)
+	{
 		ga_error("start ffmpeg-server failed.\n");
 		return -1;
 	}
 	return 0;
 }
 
-static int
-ff_server_stop(void *arg) {
-	void *x;
+static int ff_server_stop(void* arg)
+{
+	void* x;
 	server_started = 0;
 	pthread_cancel(server_tid);
 	ga_error("wait for ffmpeg-server termination ...\n");
@@ -170,51 +181,69 @@ ff_server_stop(void *arg) {
 	return 0;
 }
 
-static int
-ff_server_deinit(void *arg) {
+static int ff_server_deinit(void* arg)
+{
 #ifdef WIN32
-	if(server_socket != INVALID_SOCKET)	{ closesocket(server_socket); }
+	if(server_socket != INVALID_SOCKET)
+	{
+		closesocket(server_socket);
+	}
 	server_socket = INVALID_SOCKET;
 #else
-	if(server_socket >= 0)		{ close(server_socket); }
+	if(server_socket >= 0)
+	{
+		close(server_socket);
+	}
 	server_socket = -1;
 #endif
 	return 0;
 }
 
-static int
-ff_server_send_packet_1(const char *prefix, void *ctx, int channelId, AVPacket *pkt, int64_t encoderPts, struct timeval *ptv) {
+static int ff_server_send_packet_1(const char* prefix,
+											  void* ctx,
+											  int channelId,
+											  AVPacket* pkt,
+											  int64_t encoderPts,
+											  struct timeval* ptv)
+{
 	int iolen;
-	uint8_t *iobuf;
-	RTSPContext *rtsp = (RTSPContext*) ctx;
+	uint8_t* iobuf;
+	RTSPContext* rtsp = (RTSPContext*)ctx;
 	//
-	if(rtsp->fmtctx[channelId] == NULL) {
+	if(rtsp->fmtctx[channelId] == NULL)
+	{
 		// not initialized - disabled?
 		return 0;
 	}
-	if(encoderPts != (int64_t) AV_NOPTS_VALUE) {
-		pkt->pts = av_rescale_q(encoderPts,
-				rtsp->encoder[channelId]->time_base,
-				rtsp->stream[channelId]->time_base);
+	if(encoderPts != (int64_t)AV_NOPTS_VALUE)
+	{
+		pkt->pts = av_rescale_q(encoderPts, rtsp->encoder[channelId]->time_base, rtsp->stream[channelId]->time_base);
 	}
 #ifdef HOLE_PUNCHING
-	if(ffio_open_dyn_packet_buf(&rtsp->fmtctx[channelId]->pb, rtsp->mtu) < 0) {
+	if(ffio_open_dyn_packet_buf(&rtsp->fmtctx[channelId]->pb, rtsp->mtu) < 0)
+	{
 		ga_error("%s: buffer allocation failed.\n", prefix);
 		return -1;
 	}
-	if(av_write_frame(rtsp->fmtctx[channelId], pkt) != 0) {
+	if(av_write_frame(rtsp->fmtctx[channelId], pkt) != 0)
+	{
 		ga_error("%s: write failed.\n", prefix);
 		return -1;
 	}
 	iolen = avio_close_dyn_buf(rtsp->fmtctx[channelId]->pb, &iobuf);
-	if(rtsp->lower_transport[channelId] == RTSP_LOWER_TRANSPORT_TCP) {
-		if(rtsp_write_bindata(rtsp, channelId, iobuf, iolen) < 0) {
+	if(rtsp->lower_transport[channelId] == RTSP_LOWER_TRANSPORT_TCP)
+	{
+		if(rtsp_write_bindata(rtsp, channelId, iobuf, iolen) < 0)
+		{
 			av_free(iobuf);
 			ga_error("%s: RTSP write failed.\n", prefix);
 			return -1;
 		}
-	} else {
-		if(rtp_write_bindata(rtsp, channelId, iobuf, iolen) < 0) {
+	}
+	else
+	{
+		if(rtp_write_bindata(rtsp, channelId, iobuf, iolen) < 0)
+		{
 			av_free(iobuf);
 			ga_error("%s: RTP write failed.\n", prefix);
 			return -1;
@@ -222,22 +251,27 @@ ff_server_send_packet_1(const char *prefix, void *ctx, int channelId, AVPacket *
 	}
 	av_free(iobuf);
 #else
-	if(rtsp->lower_transport[channelId] == RTSP_LOWER_TRANSPORT_TCP) {
-		//if(avio_open_dyn_buf(&rtsp->fmtctx[channelId]->pb) < 0)
-		if(ffio_open_dyn_packet_buf(&rtsp->fmtctx[channelId]->pb, rtsp->mtu) < 0) {
+	if(rtsp->lower_transport[channelId] == RTSP_LOWER_TRANSPORT_TCP)
+	{
+		// if(avio_open_dyn_buf(&rtsp->fmtctx[channelId]->pb) < 0)
+		if(ffio_open_dyn_packet_buf(&rtsp->fmtctx[channelId]->pb, rtsp->mtu) < 0)
+		{
 			ga_error("%s: buffer allocation failed.\n", prefix);
 			return -1;
 		}
 	}
-	if(av_write_frame(rtsp->fmtctx[channelId], pkt) != 0) {
+	if(av_write_frame(rtsp->fmtctx[channelId], pkt) != 0)
+	{
 		ga_error("%s: write failed.\n", prefix);
 		return -1;
 	}
-	if(rtsp->lower_transport[channelId] == RTSP_LOWER_TRANSPORT_TCP) {
+	if(rtsp->lower_transport[channelId] == RTSP_LOWER_TRANSPORT_TCP)
+	{
 		int iolen;
-		uint8_t *iobuf;
+		uint8_t* iobuf;
 		iolen = avio_close_dyn_buf(rtsp->fmtctx[channelId]->pb, &iobuf);
-		if(rtsp_write_bindata(rtsp, channelId, iobuf, iolen) < 0) {
+		if(rtsp_write_bindata(rtsp, channelId, iobuf, iolen) < 0)
+		{
 			av_free(iobuf);
 			ga_error("%s: write failed.\n", prefix);
 			return -1;
@@ -248,32 +282,32 @@ ff_server_send_packet_1(const char *prefix, void *ctx, int channelId, AVPacket *
 	return 0;
 }
 
-static int
-ff_server_send_packet(const char *prefix, int channelId, AVPacket *pkt, int64_t encoderPts, struct timeval *ptv) {
+static int ff_server_send_packet(const char* prefix, int channelId, AVPacket* pkt, int64_t encoderPts, struct timeval* ptv)
+{
 	map<void*, void*>::iterator mi;
 	pthread_rwlock_rdlock(&cclock);
-	for(mi = client_context.begin(); mi != client_context.end(); mi++) {
+	for(mi = client_context.begin(); mi != client_context.end(); mi++)
+	{
 		ff_server_send_packet_1(prefix, mi->second, channelId, pkt, encoderPts, ptv);
 	}
 	pthread_rwlock_unlock(&cclock);
 	return 0;
 }
 
-ga_module_t *
-module_load() {
+ga_module_t* module_load()
+{
 	static ga_module_t m;
 	//
 	bzero(&m, sizeof(m));
-	m.type = GA_MODULE_TYPE_SERVER;
-	m.name = strdup("ffmpeg-rtsp-server");
-	m.init = ff_server_init;
-	m.start = ff_server_start;
-	m.stop = ff_server_stop;
-	m.deinit = ff_server_deinit;
+	m.type		  = GA_MODULE_TYPE_SERVER;
+	m.name		  = strdup("ffmpeg-rtsp-server");
+	m.init		  = ff_server_init;
+	m.start		  = ff_server_start;
+	m.stop		  = ff_server_stop;
+	m.deinit		  = ff_server_deinit;
 	m.send_packet = ff_server_send_packet;
 	//
 	encoder_register_sinkserver(&m);
 	//
 	return &m;
 }
-

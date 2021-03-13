@@ -1,1 +1,1 @@
-../../../core/ga-conf.h
+../../../ core / ga - conf.h

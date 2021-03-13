@@ -21,16 +21,16 @@
  * video frame converter: implementation
  */
 
+#include "vconverter.hpp"
 
 #include "common.hpp"
 #include "conf.hpp"
-#include "vconverter.hpp"
 
 #include <map>
 
 using namespace std;
 
-static map<struct vconvcfg, struct SwsContext *> ga_converters;
+static map<struct vconvcfg, struct SwsContext*> ga_converters;
 
 /**
  * Implement operator< for \a vconvcfg data structure.
@@ -40,19 +40,32 @@ static map<struct vconvcfg, struct SwsContext *> ga_converters;
  * @return \a true if \a is smaller than \b,
  *	or \a false if \a is not smaller than \b.
  */
-bool operator<(struct vconvcfg a, struct vconvcfg b) {
-	if(a.src_width < b.src_width)	return true;
-	if(a.src_width > b.src_width)	return false;
-	if(a.src_height < b.src_height)	return true;
-	if(a.src_height > b.src_height)	return false;
-	if(a.src_fmt < b.src_fmt)	return true;
-	if(a.src_fmt > b.src_fmt)	return false;
-	if(a.dst_width < b.dst_width)	return true;
-	if(a.dst_width > b.dst_width)	return false;
-	if(a.dst_height < b.dst_height)	return true;
-	if(a.dst_height > b.dst_height)	return false;
-	if(a.dst_fmt < b.dst_fmt)	return true;
-	if(a.dst_fmt > b.dst_fmt)	return false;
+bool operator<(struct vconvcfg a, struct vconvcfg b)
+{
+	if(a.src_width < b.src_width)
+		return true;
+	if(a.src_width > b.src_width)
+		return false;
+	if(a.src_height < b.src_height)
+		return true;
+	if(a.src_height > b.src_height)
+		return false;
+	if(a.src_fmt < b.src_fmt)
+		return true;
+	if(a.src_fmt > b.src_fmt)
+		return false;
+	if(a.dst_width < b.dst_width)
+		return true;
+	if(a.dst_width > b.dst_width)
+		return false;
+	if(a.dst_height < b.dst_height)
+		return true;
+	if(a.dst_height > b.dst_height)
+		return false;
+	if(a.dst_fmt < b.dst_fmt)
+		return true;
+	if(a.dst_fmt > b.dst_fmt)
+		return false;
 	/* all fields are equal */
 	return false;
 }
@@ -64,11 +77,12 @@ bool operator<(struct vconvcfg a, struct vconvcfg b) {
  * @return Pointer to the \a SwsContext structure of the converter,
  *	or NULL if not found.
  */
-static struct SwsContext *
-lookup_frame_converter_internal(struct vconvcfg *ccfg) {
-	map<struct vconvcfg, struct SwsContext *>::iterator mi;
+static struct SwsContext* lookup_frame_converter_internal(struct vconvcfg* ccfg)
+{
+	map<struct vconvcfg, struct SwsContext*>::iterator mi;
 	//
-	if((mi = ga_converters.find(*ccfg)) != ga_converters.end()) {
+	if((mi = ga_converters.find(*ccfg)) != ga_converters.end())
+	{
 		return mi->second;
 	}
 	//
@@ -87,16 +101,16 @@ lookup_frame_converter_internal(struct vconvcfg *ccfg) {
  * @return Pointer to the \a SwsContext structure of the converter,
  *	or NULL if not found.
  */
-struct SwsContext *
-lookup_frame_converter(int srcw, int srch, AVPixelFormat srcfmt, int dstw, int dsth, AVPixelFormat dstfmt) {
+struct SwsContext* lookup_frame_converter(int srcw, int srch, AVPixelFormat srcfmt, int dstw, int dsth, AVPixelFormat dstfmt)
+{
 	struct vconvcfg ccfg;
 	//
-	ccfg.src_width = srcw;
+	ccfg.src_width	 = srcw;
 	ccfg.src_height = srch;
-	ccfg.src_fmt = srcfmt;
-	ccfg.dst_width = dstw;
+	ccfg.src_fmt	 = srcfmt;
+	ccfg.dst_width	 = dstw;
 	ccfg.dst_height = dsth;
-	ccfg.dst_fmt = dstfmt;
+	ccfg.dst_fmt	 = dstfmt;
 	//
 	return lookup_frame_converter_internal(&ccfg);
 }
@@ -116,33 +130,34 @@ lookup_frame_converter(int srcw, int srch, AVPixelFormat srcfmt, int dstw, int d
  * This function does not create duplicated converters.
  * An existing converter is returned if it has already been created.
  */
-struct SwsContext *
-create_frame_converter(int srcw, int srch, AVPixelFormat srcfmt,
-		 int dstw, int dsth, AVPixelFormat dstfmt) {
-	map<struct vconvcfg, struct SwsContext *>::iterator mi;
+struct SwsContext* create_frame_converter(int srcw, int srch, AVPixelFormat srcfmt, int dstw, int dsth, AVPixelFormat dstfmt)
+{
+	map<struct vconvcfg, struct SwsContext*>::iterator mi;
 	struct vconvcfg ccfg;
-	struct SwsContext *ctx;
+	struct SwsContext* ctx;
 	//
-	ccfg.src_width = srcw;
+	ccfg.src_width	 = srcw;
 	ccfg.src_height = srch;
-	ccfg.src_fmt = srcfmt;
-	ccfg.dst_width = dstw;
+	ccfg.src_fmt	 = srcfmt;
+	ccfg.dst_width	 = dstw;
 	ccfg.dst_height = dsth;
-	ccfg.dst_fmt = dstfmt;
+	ccfg.dst_fmt	 = dstfmt;
 	//
 	if((ctx = lookup_frame_converter_internal(&ccfg)) != NULL)
 		return ctx;
 	//
-	if((ctx = sws_getContext(srcw, srch, srcfmt,
-				 dstw, dsth, dstfmt,
-				 SWS_BICUBIC, NULL, NULL, NULL)) == NULL) {
+	if((ctx = sws_getContext(srcw, srch, srcfmt, dstw, dsth, dstfmt, SWS_BICUBIC, NULL, NULL, NULL)) == NULL)
+	{
 		return NULL;
 	}
 	ga_converters[ccfg] = ctx;
 	ga_error("Frame converter created: from (%d,%d)[%d] -> (%d,%d)[%d]\n",
-		(int) srcw, (int) srch, (int) srcfmt,
-		(int) dstw, (int) dsth, (int) dstfmt);
+				(int)srcw,
+				(int)srch,
+				(int)srcfmt,
+				(int)dstw,
+				(int)dsth,
+				(int)dstfmt);
 	//
 	return ctx;
 }
-

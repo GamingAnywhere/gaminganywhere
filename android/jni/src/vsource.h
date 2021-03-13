@@ -1,1 +1,1 @@
-../../../core/vsource.h
+../../../ core / vsource.h

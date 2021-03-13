@@ -17,7 +17,7 @@
  */
 
 /**
- * @file 
+ * @file
  * dpipe implementation: pipe for delivering discrete frames
  */
 #include "dpipe.hpp"
@@ -29,7 +29,7 @@ using namespace std;
 
 /** Store the mapping between pipe-name and pipe structure */
 static std::mutex dpipemap_mutex;
-static map<string,dpipe_t*> dpipemap;
+static map<string, dpipe_t*> dpipemap;
 
 /**
  * Create and register a new video pipe.
@@ -42,10 +42,10 @@ static map<string,dpipe_t*> dpipemap;
  *
  * Note: dpipe_create() also returns NULL if the requesting name is existed.
  */
-dpipe_t *
-dpipe_create(int id, const char *name, int nframe, int maxframesize) {
+dpipe_t* dpipe_create(int id, const char* name, int nframe, int maxframesize)
+{
 	int i;
-	dpipe_t *dpipe;
+	dpipe_t* dpipe;
 	// sanity checks
 	if(name == NULL || id < 0 || nframe <= 0 || maxframesize <= 0)
 		return NULL;
@@ -54,39 +54,40 @@ dpipe_create(int id, const char *name, int nframe, int maxframesize) {
 		return NULL;
 	// allocate the space
 	dpipe = new dpipe_t();
-	//if((dpipe = (dpipe_t*) malloc(sizeof(dpipe_t))) == NULL)
-		//return NULL;
+	// if((dpipe = (dpipe_t*) malloc(sizeof(dpipe_t))) == NULL)
+	// return NULL;
 	//
 	bzero(dpipe, sizeof(dpipe_t));
 	dpipe->channel_id = id;
-	if ((dpipe->name = strdup(name)) == NULL)
+	if((dpipe->name = strdup(name)) == NULL)
 	{
 		dpipe_destroy(dpipe);
 		return nullptr;
 	}
 	// alloc and init frame buffers
-	for(i = 0; i < nframe; i++) {
+	for(i = 0; i < nframe; i++)
+	{
 		dpipe_buffer_t* dbuffer;
-		if((dbuffer = (dpipe_buffer_t*) malloc(sizeof(dpipe_buffer_t))) == NULL)
+		if((dbuffer = (dpipe_buffer_t*)malloc(sizeof(dpipe_buffer_t))) == NULL)
 		{
 			dpipe_destroy(dpipe);
 			return nullptr;
 		}
-		if(ga_malloc(maxframesize, &dbuffer->internal, &dbuffer->offset) < 0) {
+		if(ga_malloc(maxframesize, &dbuffer->internal, &dbuffer->offset) < 0)
+		{
 			free(dbuffer);
 			dpipe_destroy(dpipe);
 			return nullptr;
 		}
-		dbuffer->pointer = (void*) (((char*) dbuffer->internal) + dbuffer->offset);
-		dbuffer->next = dpipe->in;
-		dpipe->in = dbuffer;
+		dbuffer->pointer = (void*)(((char*)dbuffer->internal) + dbuffer->offset);
+		dbuffer->next	  = dpipe->in;
+		dpipe->in		  = dbuffer;
 		dpipe->in_count++;
 	}
 	//
-	std::lock_guard<std::mutex> lk{ dpipemap_mutex };
+	std::lock_guard<std::mutex> lk{dpipemap_mutex};
 	dpipemap[dpipe->name] = dpipe;
-	ga_error("dpipe: '%s' initialized, %d frames, framesize = %d\n",
-		dpipe->name, dpipe->in_count, maxframesize);
+	ga_error("dpipe: '%s' initialized, %d frames, framesize = %d\n", dpipe->name, dpipe->in_count, maxframesize);
 	return dpipe;
 }
 
@@ -96,12 +97,12 @@ dpipe_create(int id, const char *name, int nframe, int maxframesize) {
  * @param name [in] The name of the pipe
  * @return Pointer to the requested pipe, or NULL if not found.
  */
-dpipe_t *
-dpipe_lookup(const char *name) {
-	map<string,dpipe_t*>::iterator mi;
-	dpipe_t *dpipe = NULL;
+dpipe_t* dpipe_lookup(const char* name)
+{
+	map<string, dpipe_t*>::iterator mi;
+	dpipe_t* dpipe = NULL;
 	//
-	std::lock_guard<std::mutex> lk{ dpipemap_mutex };
+	std::lock_guard<std::mutex> lk{dpipemap_mutex};
 	if((mi = dpipemap.find(name)) != dpipemap.end())
 		dpipe = mi->second;
 	return dpipe;
@@ -113,23 +114,26 @@ dpipe_lookup(const char *name) {
  * @param dpipe [in] Pointer to the dpipe structure
  * @return Currently always return 0
  */
-int
-dpipe_destroy(dpipe_t *dpipe) {
+int dpipe_destroy(dpipe_t* dpipe)
+{
 	dpipe_buffer_t *vbuf, *next;
 	if(dpipe == NULL)
 		return 0;
-	if(dpipe->name) {
-		std::lock_guard<std::mutex> lk{ dpipemap_mutex };
+	if(dpipe->name)
+	{
+		std::lock_guard<std::mutex> lk{dpipemap_mutex};
 		dpipemap.erase(dpipe->name);
 		free(dpipe->name);
 	}
 	//
-	for(vbuf = dpipe->in; vbuf != NULL; vbuf = next) {
+	for(vbuf = dpipe->in; vbuf != NULL; vbuf = next)
+	{
 		next = vbuf->next;
 		free(vbuf->internal);
 		free(vbuf);
 	}
-	for(vbuf = dpipe->out; vbuf != NULL; vbuf = next) {
+	for(vbuf = dpipe->out; vbuf != NULL; vbuf = next)
+	{
 		next = vbuf->next;
 		free(vbuf->internal);
 		free(vbuf);
@@ -150,26 +154,32 @@ dpipe_destroy(dpipe_t *dpipe) {
  * This function should always success.
  * In case there is no availabe free frame buffer, this function
  * returns the eldest frame buffer in the output pool.
- * 
+ *
  */
-dpipe_buffer_t *
-dpipe_get(dpipe_t *dpipe) {
-	dpipe_buffer_t *vbuf = NULL;
+dpipe_buffer_t* dpipe_get(dpipe_t* dpipe)
+{
+	dpipe_buffer_t* vbuf = NULL;
 	//
-	std::lock_guard<std::mutex> lk{ dpipe->io_mutex };
-	if(dpipe->in != NULL) {
+	std::lock_guard<std::mutex> lk{dpipe->io_mutex};
+	if(dpipe->in != NULL)
+	{
 		// quick path: has available frame buffers
-		if((vbuf = dpipe->in) != NULL) {
-			dpipe->in = vbuf->next;
+		if((vbuf = dpipe->in) != NULL)
+		{
+			dpipe->in  = vbuf->next;
 			vbuf->next = NULL;
 			dpipe->in_count--;
 		}
-	} else {
+	}
+	else
+	{
 		// no available buffers: drop the eldest frame buffer from output pool
-		if((vbuf = dpipe->out) != NULL) {
+		if((vbuf = dpipe->out) != NULL)
+		{
 			dpipe->out = vbuf->next;
 			vbuf->next = NULL;
-			if(dpipe->out == NULL) {
+			if(dpipe->out == NULL)
+			{
 				dpipe->out_tail = NULL;
 			}
 			dpipe->out_count--;
@@ -185,11 +195,11 @@ dpipe_get(dpipe_t *dpipe) {
  * @param dpipe [in] The involved pipe
  * @param buffer [in] Pointer to the buffer to be released
  */
-void
-dpipe_put(dpipe_t *dpipe, dpipe_buffer_t *buffer) {
-	std::lock_guard<std::mutex> lk{ dpipe->io_mutex };
+void dpipe_put(dpipe_t* dpipe, dpipe_buffer_t* buffer)
+{
+	std::lock_guard<std::mutex> lk{dpipe->io_mutex};
 	buffer->next = dpipe->in;
-	dpipe->in = buffer;
+	dpipe->in	 = buffer;
 	dpipe->in_count++;
 }
 
@@ -205,32 +215,36 @@ dpipe_put(dpipe_t *dpipe, dpipe_buffer_t *buffer) {
  * is available in the output pool.
  * If \a abstime is given, it returns NULL on timed out.
  */
-dpipe_buffer_t * dpipe_load(dpipe_t *dpipe, const struct timespec *abstime) {
-	dpipe_buffer_t *vbuf = NULL;
-	int failed = 0;
+dpipe_buffer_t* dpipe_load(dpipe_t* dpipe, const struct timespec* abstime)
+{
+	dpipe_buffer_t* vbuf = NULL;
+	int failed				= 0;
 	//
-	std::unique_lock<std::mutex> lk{ dpipe->io_mutex };
-	while (true)
+	std::unique_lock<std::mutex> lk{dpipe->io_mutex};
+	while(true)
 	{
-		if (dpipe->out != NULL) {
-			vbuf = dpipe->out;
+		if(dpipe->out != NULL)
+		{
+			vbuf		  = dpipe->out;
 			dpipe->out = vbuf->next;
 			vbuf->next = NULL;
-			if (dpipe->out == NULL)
+			if(dpipe->out == NULL)
 				dpipe->out_tail = NULL;
 			dpipe->out_count--;
 			break;
 		}
-		else if (abstime == NULL) {
+		else if(abstime == NULL)
+		{
 			// no frame buffered
 			dpipe->cond.wait(lk);
 		}
-		else if (failed == 0) {
-			dpipe->cond.wait_for(lk, std::chrono::seconds{ abstime->tv_sec } + std::chrono::nanoseconds{ abstime->tv_nsec });
+		else if(failed == 0)
+		{
+			dpipe->cond.wait_for(lk, std::chrono::seconds{abstime->tv_sec} + std::chrono::nanoseconds{abstime->tv_nsec});
 			failed = 1;
 		}
 	}
-	
+
 	return vbuf;
 }
 
@@ -243,13 +257,14 @@ dpipe_buffer_t * dpipe_load(dpipe_t *dpipe, const struct timespec *abstime) {
  * This function returns the first frame buffer in the output pool.
  * If there is not a frame in the output pool, it returns NULL immediately.
  */
-dpipe_buffer_t *
-dpipe_load_nowait(dpipe_t *dpipe) {
-	dpipe_buffer_t *vbuf = NULL;
+dpipe_buffer_t* dpipe_load_nowait(dpipe_t* dpipe)
+{
+	dpipe_buffer_t* vbuf = NULL;
 	//
-	std::lock_guard<std::mutex> lk{ dpipe->io_mutex };
-	if(dpipe->out != NULL) {
-		vbuf = dpipe->out;
+	std::lock_guard<std::mutex> lk{dpipe->io_mutex};
+	if(dpipe->out != NULL)
+	{
+		vbuf		  = dpipe->out;
 		dpipe->out = vbuf->next;
 		vbuf->next = NULL;
 		if(dpipe->out == NULL)
@@ -266,14 +281,17 @@ dpipe_load_nowait(dpipe_t *dpipe) {
  * @param dpipe [in] The involved pipe
  * @param buffer [in] Pointer to the buffer to be stored.
  */
-void
-dpipe_store(dpipe_t *dpipe, dpipe_buffer_t *buffer) {
+void dpipe_store(dpipe_t* dpipe, dpipe_buffer_t* buffer)
+{
 	std::unique_lock<std::mutex> lk{dpipe->io_mutex};
 	// put at the end
-	if(dpipe->out_tail != NULL) {
+	if(dpipe->out_tail != NULL)
+	{
 		dpipe->out_tail->next = buffer;
-		dpipe->out_tail = buffer;
-	} else {
+		dpipe->out_tail		 = buffer;
+	}
+	else
+	{
 		dpipe->out = dpipe->out_tail = buffer;
 	}
 	buffer->next = NULL;
@@ -282,4 +300,3 @@ dpipe_store(dpipe_t *dpipe, dpipe_buffer_t *buffer) {
 	lk.unlock();
 	dpipe->cond.notify_one();
 }
-

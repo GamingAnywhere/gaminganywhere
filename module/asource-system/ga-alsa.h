@@ -17,28 +17,28 @@
  */
 
 #ifndef __XCAP_ALSA_H__
-#define	__XCAP_ALSA_H__
+#define __XCAP_ALSA_H__
 
-#include <sys/types.h>
 #include <alsa/asoundlib.h>
-
 #include <list>
+#include <sys/types.h>
 
-struct ga_alsa_param {
-	snd_pcm_t *handle;
-	snd_output_t *sndlog;
+struct ga_alsa_param
+{
+	snd_pcm_t* handle;
+	snd_output_t* sndlog;
 	snd_pcm_format_t format;
 	unsigned int channels;
 	unsigned int samplerate;
-	snd_pcm_uframes_t chunk_size;	// # of frames in a read
+	snd_pcm_uframes_t chunk_size; // # of frames in a read
 	snd_pcm_uframes_t buffer_size;
-	size_t bits_per_sample;		// S16LE = 16-bits
-	size_t bits_per_frame;		// bits_per_sample * # of channels
+	size_t bits_per_sample; // S16LE = 16-bits
+	size_t bits_per_frame;	// bits_per_sample * # of channels
 	size_t chunk_bytes;		// chunk_size * bits_per_frame
 };
 
-int ga_alsa_set_param(struct ga_alsa_param *param);
-snd_pcm_t* ga_alsa_init(snd_output_t **pout);
-void ga_alsa_close(snd_pcm_t *handle, snd_output_t *pout);
+int ga_alsa_set_param(struct ga_alsa_param* param);
+snd_pcm_t* ga_alsa_init(snd_output_t** pout);
+void ga_alsa_close(snd_pcm_t* handle, snd_output_t* pout);
 
 #endif

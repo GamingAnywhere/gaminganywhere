@@ -20,14 +20,15 @@
 #define __XCAP_OSX_H__
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #include "ga-common.h"
 
-int ga_osx_init(struct gaImage *image);
-void ga_osx_deinit();
-int ga_osx_capture(char *buf, int buflen, struct gaRect *rect);
+	int ga_osx_init(struct gaImage* image);
+	void ga_osx_deinit();
+	int ga_osx_capture(char* buf, int buflen, struct gaRect* rect);
 
 #ifdef __cplusplus
 }

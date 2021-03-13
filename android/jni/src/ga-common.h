@@ -1,1 +1,1 @@
-../../../core/ga-common.h
+../../../ core / ga - common.h

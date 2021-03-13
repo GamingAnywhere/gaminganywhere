@@ -19,34 +19,38 @@
 #ifndef __GA_HOOK_WINMM_H__
 #define __GA_HOOK_WINMM_H__
 
-#include <mmsystem.h>
-#include <mmreg.h>
-
 #include "hook-common.h"
 
+#include <mmreg.h>
+#include <mmsystem.h>
+
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-// winmm: not STDMETHODCALLTYPE?
-typedef MMRESULT (*t_waveOutOpen)(LPHWAVEOUT phwo, UINT_PTR uDeviceID, LPWAVEFORMATEX pwfx, DWORD_PTR dwCallback, DWORD_PTR dwCallbackInstance, DWORD fdwOpen);
-typedef MMRESULT (*t_waveOutWrite)(HWAVEOUT hwo, LPWAVEHDR pwh, UINT cbwh);
-typedef MMRESULT (*t_waveOutClose)(HWAVEOUT hwo);
+	// winmm: not STDMETHODCALLTYPE?
+	typedef MMRESULT (*t_waveOutOpen)(LPHWAVEOUT phwo,
+												 UINT_PTR uDeviceID,
+												 LPWAVEFORMATEX pwfx,
+												 DWORD_PTR dwCallback,
+												 DWORD_PTR dwCallbackInstance,
+												 DWORD fdwOpen);
+	typedef MMRESULT (*t_waveOutWrite)(HWAVEOUT hwo, LPWAVEHDR pwh, UINT cbwh);
+	typedef MMRESULT (*t_waveOutClose)(HWAVEOUT hwo);
 #ifdef __cplusplus
 }
 #endif
 
 // prototypes: no need DllExport
-MMRESULT hook_waveOutOpen(
-		LPHWAVEOUT phwo,
-		UINT_PTR uDeviceID,
-		LPWAVEFORMATEX pwfx,
-		DWORD_PTR dwCallback,
-		DWORD_PTR dwCallbackInstance,
-		DWORD fdwOpen);
+MMRESULT hook_waveOutOpen(LPHWAVEOUT phwo,
+								  UINT_PTR uDeviceID,
+								  LPWAVEFORMATEX pwfx,
+								  DWORD_PTR dwCallback,
+								  DWORD_PTR dwCallbackInstance,
+								  DWORD fdwOpen);
 MMRESULT hook_waveOutWrite(HWAVEOUT hwo, LPWAVEHDR pwh, UINT cbwh);
 MMRESULT hook_waveOutClose(HWAVEOUT hwo);
 
 int hook_winmm();
 
-#endif	/* __GA_HOOK_WINMM_H__ */
-
+#endif /* __GA_HOOK_WINMM_H__ */

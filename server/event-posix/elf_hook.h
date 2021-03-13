@@ -25,18 +25,20 @@
 #ifndef __ELF_HOOK_H__
 #define __ELF_HOOK_H__
 
-#define	LIBRARY_ADDRESS_BY_HANDLE(dlhandle)	\
-		((NULL == dlhandle) ? NULL : (void*) *(size_t const*)(dlhandle)) 
+#define LIBRARY_ADDRESS_BY_HANDLE(dlhandle) ((NULL == dlhandle) ? NULL : (void*)*(size_t const*)(dlhandle))
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-int get_module_base_address(char const *module_filename, void *handle, void **base);
-void *elf_hook(char const *library_filename, void const *library_address, char const *function_name, void const *substitution_address);
+	int get_module_base_address(char const* module_filename, void* handle, void** base);
+	void* elf_hook(char const* library_filename,
+						void const* library_address,
+						char const* function_name,
+						void const* substitution_address);
 
 #ifdef __cplusplus
 }
 #endif
-#endif	/* __ELF_HOOK_H__ */
+#endif /* __ELF_HOOK_H__ */

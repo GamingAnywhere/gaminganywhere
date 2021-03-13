@@ -19,11 +19,12 @@
 #ifndef __GA_WIN32_COMMON_H__
 #define __GA_WIN32_COMMON_H__
 
-#include <stdio.h>
 #include "ga-common.h"
 #include "ga-conf.h"
 #include "vsource.h"
 
-int ga_win32_draw_system_cursor(vsource_frame_t *frame);
+#include <stdio.h>
+
+int ga_win32_draw_system_cursor(vsource_frame_t* frame);
 
 #endif /* __GA_WIN32_COMMON_H__ */

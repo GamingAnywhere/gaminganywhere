@@ -22,19 +22,21 @@
 #include "dpipe.h"
 #include "vsource.h"
 
-#define	SOURCES			1
+#define SOURCES 1
 
-#define	GA_HOOK_INVALID_THREADID	0xffffffff
+#define GA_HOOK_INVALID_THREADID 0xffffffff
 
 /** COM Interface vtable pointers */
-typedef struct vtable_s {
-	void *func[1];
-}	vtable_t;
+typedef struct vtable_s
+{
+	void* func[1];
+} vtable_t;
 
 /** COM Interface pointer to vtable */
-typedef struct comobj_s {
-	vtable_t *vtbl;
-}	comobj_t;
+typedef struct comobj_s
+{
+	vtable_t* vtbl;
+} comobj_t;
 
 extern int vsource_initialized;
 extern int resolution_retrieved;
@@ -49,22 +51,22 @@ extern int server_num_token_to_fill;
 extern int server_max_tokens;
 extern int video_fps;
 
-extern dpipe_t *g_pipe[SOURCES];
+extern dpipe_t* g_pipe[SOURCES];
 
 int vsource_init(int width, int height);
 
 int ga_hook_capture_prepared(int width, int height, int check_resolution);
-void ga_hook_capture_dupframe(vsource_frame_t *frame);
+void ga_hook_capture_dupframe(vsource_frame_t* frame);
 
-void *ga_server(void *arg);
+void* ga_server(void* arg);
 int ga_hook_get_resolution(int width, int height);
 int ga_hook_video_rate_control();
 int ga_hook_init();
 #ifndef WIN32
-void * ga_hook_lookup(void *handle, const char *name);
-void * ga_hook_lookup_or_quit(void *handle, const char *name);
+void* ga_hook_lookup(void* handle, const char* name);
+void* ga_hook_lookup_or_quit(void* handle, const char* name);
 #else
-void ga_hook_function(const char *id, void *oldfunc, void *newfunc);
+void ga_hook_function(const char* id, void* oldfunc, void* newfunc);
 #endif
 
-#endif	/* __GA_HOOK_COMMON_H__ */
+#endif /* __GA_HOOK_COMMON_H__ */
