@@ -50,12 +50,12 @@ EXPORT	void			ctrl_queue_clear();
 EXPORT	int	ctrl_socket_init(struct RTSPConf *conf);
 
 EXPORT	int	ctrl_client_init(struct RTSPConf *conf, const char *ctrlid);
-EXPORT	void*	ctrl_client_thread(void *rtspconf);
+EXPORT	void	ctrl_client_thread(RTSPConf* rtspconf);
 EXPORT	void	ctrl_client_sendmsg(void *msg, int msglen);
 
 EXPORT	int	ctrl_server_init(struct RTSPConf *conf, const char *ctrlid);
 EXPORT	msgfunc ctrl_server_setreplay(msgfunc);
-EXPORT	void*	ctrl_server_thread(void *rtspconf);
+EXPORT	void	ctrl_server_thread(RTSPConf* rtspconf);
 EXPORT	int	crtl_server_readnext(void *msg, int msglen);
 
 EXPORT	void	ctrl_server_set_output_resolution(int width, int height);

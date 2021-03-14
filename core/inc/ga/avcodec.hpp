@@ -19,6 +19,8 @@
 #ifndef GA_AVCODEC_HPP
 #define GA_AVCODEC_HPP
 
+#include <ga/common.hpp>
+
 extern "C" {
 #include <libswscale/swscale.h>
 #include <libswresample/swresample.h>

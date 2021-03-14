@@ -686,7 +686,7 @@ int video_source_out_stride(int channel)
  */
 int video_source_mem_size(int channel)
 {
-	vsource_t* vs = video_source(channel);
+	auto vs = video_source(channel);
 	return vs == NULL ? 0 : (vs->max_height * vs->max_stride + VSOURCE_ALIGNMENT);
 }
 

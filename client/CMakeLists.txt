@@ -4,6 +4,7 @@ project(${PROJECT_NAME}-client VERSION 0.0.1)
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(SDL2-ttf CONFIG REQUIRED)
+find_package(live555 REQUIRED)
 
 add_executable(${PROJECT_NAME}
 	#src/generic_client.cpp
@@ -19,5 +20,15 @@ add_executable(${PROJECT_NAME}
 	src/rtsp_client.hpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC src)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 ${CMAKE_PROJECT_NAME}::core)
+target_link_libraries(${PROJECT_NAME}
+	PRIVATE
+		${CMAKE_PROJECT_NAME}::core
+		SDL2::SDL2 
+		SDL2::SDL2_ttf
+		live555::liveMedia
+		live555::Groupsock
+		live555::BasicUsageEnvironment
+		live555::UsageEnvironment
+)
+target_compile_definitions(${PROJECT_NAME} PRIVATE NOMINMAX SDL_MAIN_HANDLED)
 

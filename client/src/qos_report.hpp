@@ -16,27 +16,27 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __QOSREPORT_H__
-#define __QOSREPORT_H__
+#ifndef GA_CLIENT_QOSREPORT_HPP
+#define GA_CLIENT_QOSREPORT_HPP
 
 #include <BasicUsageEnvironment.hh>
-#include <ga/common.hpp>
 #include <liveMedia.hh>
 
 #define QOS_INTERVAL_MS (30 * 1000) /* report every N seconds */
 #define QOS_PREFIX_LEN 64
 
-typedef struct qos_record_s {
+struct qos_record_t
+{
   char prefix[QOS_PREFIX_LEN];
   RTPSource *rtpsrc;
   unsigned pkts_expected;
   unsigned pkts_received;
   double KB_received;
-} qos_record_t;
+};
 
 int qos_start();
 int qos_add_source(const char *prefix, RTPSource *rtpsrc);
 int qos_deinit();
 int qos_init(UsageEnvironment *ue);
 
-#endif /* __QOSREPORT_H__ */
+#endif

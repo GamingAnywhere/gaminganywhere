@@ -16,12 +16,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __MINIH264_H__
-#define __MINIH264_H__
+#ifndef GA_CLIENT_MINIH264_HPP
+#define GA_CLIENT_MINIH264_HPP
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 
 struct mini_h264_sps {
 	unsigned char profile_idc;
@@ -83,9 +81,6 @@ struct mini_h264_context {
 };
 
 int mini_h264_parse(struct mini_h264_context *ctx, unsigned char *buf, int len);
-
-#ifdef __cplusplus
 }
-#endif
 
 #endif

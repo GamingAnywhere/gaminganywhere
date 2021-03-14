@@ -16,19 +16,18 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include "BasicUsageEnvironment.hh"
-#include "liveMedia.hh"
-/* XXX: this one must be consistent to that defined in GroupsockHelper.hh" */
-unsigned increaseReceiveBufferTo(UsageEnvironment&, int, unsigned);
-
+#include "rtsp_client.hpp"
 #include "minih264.hpp"
 #include "qos_report.hpp"
-#include "rtsp_client.hpp"
 
 #include <ga/avcodec.hpp>
 #include <ga/common.hpp>
 #include <ga/conf.hpp>
 #include <ga/controller.hpp>
+
+#include <list>
+#include <map>
+#include <string>
 
 #ifdef ANDROID
 #include "android-decoders.h"
@@ -39,9 +38,8 @@ unsigned increaseReceiveBufferTo(UsageEnvironment&, int, unsigned);
 #include "libgaclient.h"
 #endif
 
-#include <list>
-#include <map>
-#include <string>
+/* XXX: this one must be consistent to that defined in GroupsockHelper.hh" */
+unsigned increaseReceiveBufferTo(UsageEnvironment&, int, unsigned);
 
 using namespace std;
 
@@ -364,10 +362,10 @@ int init_vdecoder(int channel, const char* sprop)
 		rtsperror("video decoder(%d): cannot allocate context\n", channel);
 		return -1;
 	}
-	if(codec->capabilities & CODEC_CAP_TRUNCATED)
+	if(codec->capabilities & AV_CODEC_CAP_TRUNCATED)
 	{
 		rtsperror("video decoder(%d): codec support truncated data\n", channel);
-		ctx->flags |= CODEC_FLAG_TRUNCATED;
+		ctx->flags |= AV_CODEC_FLAG_TRUNCATED;
 	}
 	if(sprop != NULL)
 	{
@@ -881,7 +879,6 @@ static int play_video_priv(int ch /*channel*/, unsigned char* buffer, int bufsiz
 #ifdef ANDROID
 				create_overlay(ch, vframe[0]->width, vframe[0]->height, (AVPixelFormat)vframe[0]->format);
 #else
-				pthread_mutex_unlock(&rtspParam->surfaceMutex[ch]);
 				bzero(&evt, sizeof(evt));
 				evt.user.type = SDL_USEREVENT;
 				evt.user.timestamp = time(0);
@@ -894,7 +891,6 @@ static int play_video_priv(int ch /*channel*/, unsigned char* buffer, int bufsiz
 				goto skip_frame;
 #endif
 			}
-			pthread_mutex_unlock(&rtspParam->surfaceMutex[ch]);
 			// copy into pool
 			data		= dpipe_get(rtspParam->pipe[ch]);
 			dstframe = (AVPicture*)data->pointer;
@@ -1857,14 +1853,12 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
 		scs.subsession->sink->startPlaying(*(scs.subsession->readSource()), subsessionAfterPlaying, scs.subsession);
 		// Also set a handler to be called if a RTCP "BYE" arrives for this subsession:
 		if(scs.subsession->rtcpInstance() != NULL)
-		{
 			scs.subsession->rtcpInstance()->setByeHandler(subsessionByeHandler, scs.subsession);
-		}
+
 		// Set receiver buffer size
 		if(scs.subsession->rtpSource())
 		{
-			int newsz;
-			newsz = increaseReceiveBufferTo(env, scs.subsession->rtpSource()->RTPgs()->socketNum(), RCVBUF_SIZE);
+			auto newsz = increaseReceiveBufferTo(env, scs.subsession->rtpSource()->RTPgs()->socketNum(), RCVBUF_SIZE);
 			rtsperror("Receiver buffer increased to %d\n", newsz);
 		}
 		// NAT hole-punching?
@@ -2105,7 +2099,7 @@ void DummySink::afterGettingFrame(unsigned frameSize,
 											 unsigned /*durationInMicroseconds*/)
 {
 #ifndef ANDROID
-	extern pthread_mutex_t watchdogMutex;
+	extern std::mutex watchdogMutex;
 	extern struct timeval watchdogTimer;
 #endif
 	if(fSubsession.rtpPayloadFormat() == video_sess_fmt)
@@ -2120,40 +2114,25 @@ void DummySink::afterGettingFrame(unsigned frameSize,
 		if(channel > 0)
 			goto dropped;
 #endif
-		// if(drop_video_frame(channel, presentationTime) > 0) {
-		//	if(stats != NULL)
-		//		pktloss_monitor_reset(rtpsrc->SSRC());
-		//	goto dropped;
-		//}
 		if(rtpsrc != NULL)
-		{
 			marker = rtpsrc->curPacketMarkerBit();
-		}
-		//
+
 		if(stats != NULL)
-		{
 			lost = pktloss_monitor_get(stats->SSRC(), &count, 1 /*reset*/);
-#if 0
-			if(lost > 0) {
-				ga_error("rtspclient: frame corrupted? lost=%d; count=%d (packets)\n", lost, count);
-			}
-#endif
-		}
-		//
+
 		play_video(channel, fReceiveBuffer + MAX_FRAMING_SIZE - video_framing, frameSize + video_framing, presentationTime, marker);
 #ifdef ANDROID
 		if(rtspconf->builtin_video_decoder == 0 && rtspconf->builtin_audio_decoder == 0)
 			kickWatchdog(rtspParam->jnienv);
 #endif
 	}
-	else if(fSubsession.rtpPayloadFormat() == audio_sess_fmt)
-	{
-		play_audio(fReceiveBuffer + MAX_FRAMING_SIZE - audio_framing, frameSize + audio_framing, presentationTime);
-	}
+	else
+		if(fSubsession.rtpPayloadFormat() == audio_sess_fmt)
+			play_audio(fReceiveBuffer + MAX_FRAMING_SIZE - audio_framing, frameSize + audio_framing, presentationTime);
+
 #ifndef ANDROID // watchdog is implemented at the Java side
-	pthread_mutex_lock(&watchdogMutex);
+	std::lock_guard<std::mutex> lk{watchdogMutex};
 	gettimeofday(&watchdogTimer, NULL);
-	pthread_mutex_unlock(&watchdogMutex);
 #endif
 dropped:
 	// Then continue, to request the next frame of data:

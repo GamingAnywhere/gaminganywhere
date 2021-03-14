@@ -16,22 +16,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#ifndef WIN32
-#include <strings.h>
-#endif
-
 #include "minih264.hpp"
-
-#include <ga/common.hpp>
+#include <cstring>
+#include <memory>
 
 static unsigned char* dupbuf(unsigned char* buf, int len)
 {
-	unsigned char* newbuf = (unsigned char*)malloc(len);
-	if(newbuf == NULL)
-		return NULL;
-	bcopy(buf, newbuf, len);
+	auto newbuf = (unsigned char*)malloc(len);
+	if(newbuf == nullptr)
+		return nullptr;
+	std::copy(buf, buf + len, newbuf);
 	return newbuf;
 }
 
@@ -45,11 +39,10 @@ struct bufinfo
 
 static void h264_bufinit(struct bufinfo* bi, unsigned char* buf, int buflen)
 {
-	bzero(bi, sizeof(struct bufinfo));
+	memset(bi, 0, sizeof(struct bufinfo));
 	bi->bitmask = 0x80;
 	bi->buf		= buf;
 	bi->buflen	= buflen;
-	return;
 }
 
 static unsigned int h264_buf_u(struct bufinfo* bi, int n)
@@ -61,17 +54,15 @@ static unsigned int h264_buf_u(struct bufinfo* bi, int n)
 		val <<= 1;
 		val |= ((bi->buf[bi->byteoff] & (bi->bitmask)) == 0 ? 0 : 1);
 		if(bi->bitmask != 1)
-		{
 			bi->bitmask >>= 1;
-		}
 		else /* == 1 */
 		{
 			bi->byteoff++;
 			bi->bitmask = 0x80;
-			if(bi->byteoff >= bi->buflen)
-			{
+			//if(bi->byteoff >= bi->buflen)
+			//{
 				// XXX: not handled
-			}
+			//}
 		}
 	}
 	// fprintf(stderr, "u(%d) = %u\n", oldn, val);
@@ -88,7 +79,8 @@ static unsigned int h264_buf_ue(struct bufinfo* bi)
 	{
 		b = h264_buf_u(bi, 1);
 		leading++;
-	} while(b == 0);
+	}
+	while(b == 0);
 	val = (1 << leading) - 1 + h264_buf_u(bi, leading);
 	// fprintf(stderr, "OUT: ue(v) [%d] = %u\n", leading * 2 + 1, val);
 	return val;
@@ -104,10 +96,9 @@ static int h264_map_se(unsigned int code)
 
 static void scaling_list(struct bufinfo* bi, int* scalingList, int sizeOfScalingList, int useDefaultScalingMatrixFlag)
 {
-	int j;
 	int lastScale = 8;
 	int nextScale = 8;
-	for(j = 0; j < sizeOfScalingList; j++)
+	for(int j = 0; j < sizeOfScalingList; j++)
 	{
 		if(nextScale != 0)
 		{
@@ -118,7 +109,6 @@ static void scaling_list(struct bufinfo* bi, int* scalingList, int sizeOfScaling
 		scalingList[j] = (nextScale == 0) ? lastScale : nextScale;
 		lastScale		= scalingList[j];
 	}
-	return;
 }
 
 #define U(n) h264_buf_u(&bi, n)
@@ -127,10 +117,10 @@ static void scaling_list(struct bufinfo* bi, int* scalingList, int sizeOfScaling
 
 static int parse_sps(struct mini_h264_context* ctx, unsigned char* buf, int len)
 {
-	int i, src, rbsplen;
+	int rbsplen;
 	//
-	struct bufinfo bi;
-	struct mini_h264_sps* sps = &ctx->sps;
+	bufinfo bi;
+	mini_h264_sps* sps = &ctx->sps;
 	int scalingList4x4[6][16];
 	int scalingList8x8[6][64];
 	int useDefaultScalingMatrix4x4Flag[6];
@@ -139,9 +129,10 @@ static int parse_sps(struct mini_h264_context* ctx, unsigned char* buf, int len)
 	// copy buf, because we will modify its content
 	if(newbuf == NULL)
 		return -1;
+
 	buf = newbuf;
 	//
-	for(src = 0, rbsplen = 0; src < len; src++)
+	for(int src = 0, rbsplen = 0; src < len; src++)
 	{
 		if(src + 2 < len && buf[src] == 0 && buf[src + 1] == 0 && buf[src + 2] == 3)
 		{
@@ -149,12 +140,10 @@ static int parse_sps(struct mini_h264_context* ctx, unsigned char* buf, int len)
 			buf[rbsplen++] = buf[src++];
 		}
 		else
-		{
 			buf[rbsplen++] = buf[src];
-		}
 	}
 	//
-	bzero(sps, sizeof(struct mini_h264_sps));
+	memset(sps, 0, sizeof(struct mini_h264_sps));
 	// ga_log("h264: inlen=%d; rbsplen=%d\n", len, rbsplen);
 	h264_bufinit(&bi, buf, rbsplen);
 	sps->profile_idc = U(8);
@@ -174,7 +163,7 @@ static int parse_sps(struct mini_h264_context* ctx, unsigned char* buf, int len)
 		sps->seq_scaling_matrix_present_flag		= U(1);
 		if(sps->seq_scaling_matrix_present_flag)
 		{
-			for(i = 0; i < ((sps->chroma_format_idc != 3) ? 8 : 12); i++)
+			for(int i = 0; i < ((sps->chroma_format_idc != 3) ? 8 : 12); i++)
 			{
 				sps->seq_scaling_list_present_flag[i] = U(1);
 				if(sps->seq_scaling_list_present_flag[i])
@@ -190,9 +179,7 @@ static int parse_sps(struct mini_h264_context* ctx, unsigned char* buf, int len)
 	sps->log2_max_frame_num_minus4 = UE();
 	sps->pic_order_cnt_type			 = UE();
 	if(sps->pic_order_cnt_type == 0)
-	{
 		sps->log2_max_pic_order_cnt_lsb_minus4 = UE();
-	}
 	else if(sps->pic_order_cnt_type == 1)
 	{
 		sps->delta_pic_order_always_zero_flag		 = U(1);
@@ -200,9 +187,7 @@ static int parse_sps(struct mini_h264_context* ctx, unsigned char* buf, int len)
 		sps->offset_for_top_to_bottom_field			 = SE();
 		sps->num_ref_frames_in_pic_order_cnt_cycle = UE();
 		for(unsigned i = 0; i < sps->num_ref_frames_in_pic_order_cnt_cycle; i++)
-		{
 			sps->offset_for_ref_frame[i] = SE();
-		}
 	}
 	sps->max_num_ref_frames							= UE();
 	sps->gaps_in_frame_num_value_allowed_flag = U(1);
@@ -233,7 +218,7 @@ static int parse_sps(struct mini_h264_context* ctx, unsigned char* buf, int len)
 
 static void parse_slice_layer_wo_partition(struct mini_h264_context* ctx, unsigned char* buf, int len)
 {
-	struct bufinfo bi;
+	bufinfo bi;
 	//
 	h264_bufinit(&bi, buf, len);
 	/*first_mb_in_slice = */ UE();
@@ -261,7 +246,6 @@ static void parse_slice_layer_wo_partition(struct mini_h264_context* ctx, unsign
 			ctx->frametype = TYPE_SI_FRAME;
 			break;
 	}
-	return;
 }
 
 // assume: buf contains a single nal, except when nal_type = sps
@@ -278,15 +262,13 @@ int mini_h264_parse(struct mini_h264_context* ctx, unsigned char* buf, int len)
 	if((buf[4] & 0x80) != 0x00)
 		return -1;
 	//
-	bzero(ctx, sizeof(struct mini_h264_context));
+	memset(ctx, 0, sizeof(struct mini_h264_context));
 	ctx->nri	 = (buf[4] & 0x60) >> 5;
 	ctx->type = buf[4] & 0x1f;
 	// coded slide: ref PP.63 of ITU H.264 spec
 	if(ctx->type == 1 || ctx->type == 5 || ctx->type == 19)
-	{
 		// coded slice for non-IDR/IDR picture
 		parse_slice_layer_wo_partition(ctx, &buf[5], len - 5);
-	}
 	else if(ctx->type > 1 && ctx->type < 5)
 	{
 		// coded partitioned slice A, B, C: do nothing
@@ -301,14 +283,12 @@ int mini_h264_parse(struct mini_h264_context* ctx, unsigned char* buf, int len)
 		ret = 0;
 		// find next start code to determine nal length
 		for(unsigned char* s = &buf[4]; s < buf + len - 4; s++)
-		{
 			if(s[0] == 0 && s[1] == 0 && s[2] == 0 && s[3] == 1)
 			{
 				ret = s - buf;
 				break;
 			}
-		}
-		//
+
 		ctx->is_config = 1;
 		if((ctx->rawsps = dupbuf(buf, ret > 0 ? ret : len)) == NULL)
 			return -1;
@@ -328,23 +308,20 @@ int mini_h264_parse(struct mini_h264_context* ctx, unsigned char* buf, int len)
 		ret = 0;
 		// find next start code to determine nal length
 		for(unsigned char* s = &buf[4]; s < buf + len - 4; s++)
-		{
 			if(s[0] == 0 && s[1] == 0 && s[2] == 0 && s[3] == 1)
 			{
 				ret = s - buf;
 				break;
 			}
-		}
-		//
+
 		ctx->is_config = 1;
-		if((ctx->rawpps = dupbuf(buf, ret > 0 ? ret : len)) == NULL)
+		if((ctx->rawpps = dupbuf(buf, ret > 0 ? ret : len)) == nullptr)
 			return -1;
+
 		ctx->ppslen = ret > 0 ? ret : len;
 	}
 	else
-	{
 		ctx->is_config = 1;
-	}
-	//
+
 	return ret;
 }

@@ -16,15 +16,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#ifndef WIN32
-#include <strings.h>
-#endif
-
 #include "minivp8.hpp"
 
-#include <ga/common.hpp>
+#include <cstring>
 
 unsigned char* parse_descriptor(struct mini_vp8_context* ctx, unsigned char* ptr)
 {
@@ -74,10 +68,9 @@ unsigned char* parse_payload_header(struct mini_vp8_context* ctx, unsigned char*
 // return 0 on success, or -1 on fail
 int mini_vp8_parse(struct mini_vp8_context* ctx, unsigned char* buf, int len)
 {
-	//
 	unsigned char* ptr = buf;
 	//
-	bzero(ctx, sizeof(struct mini_vp8_context));
+	memset(ctx, 0, sizeof(struct mini_vp8_context));
 	ptr = parse_descriptor(ctx, buf);
 	ptr = parse_payload_header(ctx, buf);
 	if(ctx->is_keyframe)

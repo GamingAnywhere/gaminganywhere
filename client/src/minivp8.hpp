@@ -16,13 +16,10 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __MINIVP8_H__
-#define __MINIVP8_H__
+#ifndef GA_CLIENT_MINIVP8_HPP
+#define GA_CLIENT_MINIVP8_HPP
 
-#ifdef __cplusplus
 extern "C" {
-#endif
-
 #define	TYPE_I_FRAME	1	// 2, 7
 #define	TYPE_SI_FRAME	2	// 4, 9
 #define	TYPE_B_FRAME	3	// 1, 6
@@ -53,8 +50,5 @@ struct mini_vp8_context {
 
 int mini_vp8_parse(struct mini_vp8_context *ctx, unsigned char *buf, int len);
 
-#ifdef __cplusplus
 }
-#endif
-
 #endif

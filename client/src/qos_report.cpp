@@ -17,9 +17,7 @@
  */
 
 #include "qos_report.hpp"
-
 #include "rtsp_client.hpp"
-
 #include <ga/vsource.hpp>
 
 #define Q_MAX (VIDEO_SOURCE_CHANNEL_MAX + 1)

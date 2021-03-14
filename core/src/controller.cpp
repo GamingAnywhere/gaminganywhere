@@ -217,7 +217,7 @@ int ctrl_socket_init(struct RTSPConf* conf)
 
 ////////////////////////////////////////////////////////////////////
 
-int ctrl_client_init(struct RTSPConf* conf, const char* ctrlid)
+int ctrl_client_init(RTSPConf* conf, const char* ctrlid)
 {
 	if(ctrl_socket_init(conf) < 0)
 	{
@@ -254,9 +254,8 @@ error:
 	return -1;
 }
 
-void* ctrl_client_thread(void* rtspconf)
+void ctrl_client_thread(RTSPConf* conf)
 {
-	struct RTSPConf* conf = (struct RTSPConf*)rtspconf;
 #ifdef ANDROID
 	static int drop = 0;
 #endif
@@ -264,7 +263,7 @@ void* ctrl_client_thread(void* rtspconf)
 	if(ctrl_client_init(conf, CTRL_CURRENT_VERSION) < 0)
 	{
 		ga_error("controller client-thread: init failed, thread terminated.\n");
-		return NULL;
+		return;
 	}
 
 	ga_error("controller client-thread started: tid=%ld.\n", ga_gettid());
@@ -321,8 +320,6 @@ quit:
 	close(ctrlsocket);
 	ctrlsocket = -1;
 	ga_error("controller client-thread terminated: tid=%ld.\n", ga_gettid());
-
-	return NULL;
 }
 
 void ctrl_client_sendmsg(void* msg, int msglen)

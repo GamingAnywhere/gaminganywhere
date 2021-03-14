@@ -16,8 +16,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-#ifndef __RTSPCLIENT_H__
-#define __RTSPCLIENT_H__
+#ifndef GA_CLIENT_RTSPCLIENT_HPP
+#define GA_CLIENT_RTSPCLIENT_HPP
 
 #ifdef ANDROID
 #include <jni.h>
@@ -30,7 +30,7 @@
 #endif
 #include <ga/dpipe.hpp>
 
-#include <thread>
+#include <mutex>
 
 #define	SDL_USEREVENT_CREATE_OVERLAY	0x0001
 #define	SDL_USEREVENT_OPEN_AUDIO	0x0002
@@ -47,7 +47,8 @@ extern int image_rendered;
 #define	VIDEO_SOURCE_CHANNEL_MAX	2
 #endif
 
-struct RTSPThreadParam {
+struct RTSPThreadParam
+{
 	const char *url;
 	bool running;
 	bool rtpOverTCP;
@@ -56,7 +57,7 @@ struct RTSPThreadParam {
 	int width[VIDEO_SOURCE_CHANNEL_MAX];
 	int height[VIDEO_SOURCE_CHANNEL_MAX];
 	AVPixelFormat format[VIDEO_SOURCE_CHANNEL_MAX];
-	std::thread surfaceMutex[VIDEO_SOURCE_CHANNEL_MAX];
+	std::mutex surfaceMutex[VIDEO_SOURCE_CHANNEL_MAX];
 	struct SwsContext *swsctx[VIDEO_SOURCE_CHANNEL_MAX];
 	dpipe_t *pipe[VIDEO_SOURCE_CHANNEL_MAX];
 #ifdef ANDROID

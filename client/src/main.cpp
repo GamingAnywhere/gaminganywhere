@@ -18,7 +18,6 @@
 
 #include <SDL2/SDL.h>
 #include <stdarg.h>
-#include <string.h>
 #ifndef ANDROID
 #include <SDL2/SDL_ttf.h>
 #endif /* ! ANDROID */
@@ -630,7 +629,7 @@ void ProcessEvent(SDL_Event* event)
 	return;
 }
 
-static void* watchdog_thread(void* args)
+static void watchdog_thread()
 {
 	static char idlemsg[128];
 	struct timeval tv;
@@ -687,8 +686,6 @@ static void* watchdog_thread(void* args)
 	//
 	rtsperror("watchdog: terminated.\n");
 	exit(-1);
-	//
-	return NULL;
 }
 
 int main(int argc, char** argv)
